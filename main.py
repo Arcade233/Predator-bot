@@ -15,6 +15,8 @@ TOKEN = os.environ.get(
 CHANNEL_ID = (
     "@protonxona_bot"  # Ensure the bot is added as an Admin in this channel!
 )
+# Timezone set to Greenwich Mean Time / Ghana local time
+TIMEZONE = ZoneInfo("Africa/Accra")
 
 
 def build_mines_grid() -> str:
@@ -29,11 +31,11 @@ def build_mines_grid() -> str:
 
 
 async def send_1min_warning(bot: Bot):
-    now = datetime.datetime.now(ZoneInfo("UTC"))
+    now = datetime.datetime.now(TIMEZONE)
     current_hour = now.hour
 
-    # Do not send pre-signal alerts during offline hours (11 PM to 1 AM)
-    if current_hour == 0 or current_hour == 23 and now.minute > 54:
+    # Do not send pre-signal alerts during offline hours (11 PM to 1 AM GMT)
+    if current_hour == 0 or (current_hour == 23 and now.minute > 54):
         return
 
     warning_text = (
@@ -46,17 +48,17 @@ async def send_1min_warning(bot: Bot):
         await bot.send_message(
             chat_id=CHANNEL_ID, text=warning_text, parse_mode="Markdown"
         )
-        print(f"[{now.strftime('%H:%M:%S UTC')}] 1-minute alert sent.")
+        print(f"[{now.strftime('%H:%M:%S GMT')}] 1-minute alert sent.")
     except Exception as e:
         print(f"Failed to send 1-min alert to {CHANNEL_ID}: {e}")
 
 
 async def send_hourly_predictions(bot: Bot):
-    now = datetime.datetime.now(ZoneInfo("UTC"))
+    now = datetime.datetime.now(TIMEZONE)
     current_hour = now.hour
 
-    # 1. COIN FLIP SESSION (1:00 AM to 7:00 AM)
-    if 1 <= current_hour <= 7:
+    # 1. COIN FLIP SESSION (1:00 AM to 7:59 AM GMT)
+    if 1 <= current_hour < 8:
         outcome = random.choice(["🪙 HEADS", "🪙 TAILS"])
         confidence = random.randint(91, 98)
         message = (
@@ -66,8 +68,8 @@ async def send_hourly_predictions(bot: Bot):
             "⚠️ _Bet within 2 minutes! Next game in 6 mins._"
         )
 
-    # 2. MINES SESSION (8:00 AM to 3:00 PM / 15:00)
-    elif 8 <= current_hour <= 15:
+    # 2. MINES SESSION (8:00 AM to 3:59 PM / 15:59 GMT)
+    elif 8 <= current_hour < 16:
         grid = build_mines_grid()
         message = (
             "🚀 *1WIN MINES GAME* 🚀\n\n"
@@ -77,8 +79,8 @@ async def send_hourly_predictions(bot: Bot):
             "⚠️ _Accuracy: 98% (Next game in 6 mins)_"
         )
 
-    # 3. AVIATOR PREDICTION SESSION (4:00 PM / 16:00 to 11:00 PM / 23:00)
-    elif 16 <= current_hour <= 23:
+    # 3. AVIATOR PREDICTION SESSION (4:00 PM / 16:00 to 10:59 PM / 22:59 GMT)
+    elif 16 <= current_hour < 23:
         multiplier = round(random.uniform(1.35, 3.50), 2)
         message = (
             "✈️ *1WIN AVIATOR PREDICTION* ✈️\n\n"
@@ -87,12 +89,12 @@ async def send_hourly_predictions(bot: Bot):
             "⚠️ _Cash out strictly before target multiplier! Next game in 6 mins._"
         )
 
-    # 4. GOOD NIGHT SESSION (11:01 PM to 12:59 AM)
+    # 4. GOOD NIGHT SESSION (11:00 PM to 12:59 AM GMT)
     else:
         message = (
             "🌙 *GOOD NIGHT TRADERS!* 🌙\n\n"
             "The VIP Bot algorithms are now offline for maintenance.\n"
-            "Games will resume tomorrow at *1:00 AM* with the Coin Flip predictor.\n\n"
+            "Games will resume tomorrow at *1:00 AM GMT* with the Coin Flip predictor.\n\n"
             "😴 _Rest up and practice sound risk management!_"
         )
 
@@ -100,13 +102,13 @@ async def send_hourly_predictions(bot: Bot):
         await bot.send_message(
             chat_id=CHANNEL_ID, text=message, parse_mode="Markdown"
         )
-        print(f"[{now.strftime('%H:%M:%S UTC')}] Game signal sent to {CHANNEL_ID}")
+        print(f"[{now.strftime('%H:%M:%S GMT')}] Game signal sent to {CHANNEL_ID}")
     except Exception as e:
         print(f"Failed to send message to {CHANNEL_ID}: {e}")
 
 
 async def send_30min_reminder(bot: Bot):
-    now = datetime.datetime.now(ZoneInfo("UTC"))
+    now = datetime.datetime.now(TIMEZONE)
     hour = now.hour
     next_game = None
 
@@ -127,7 +129,7 @@ async def send_30min_reminder(bot: Bot):
             await bot.send_message(
                 chat_id=CHANNEL_ID, text=reminder_text, parse_mode="Markdown"
             )
-            print(f"[{now.strftime('%H:%M:%S UTC')}] 30-min reminder sent.")
+            print(f"[{now.strftime('%H:%M:%S GMT')}] 30-min reminder sent.")
         except Exception as e:
             print(f"Failed to send reminder to {CHANNEL_ID}: {e}")
 
@@ -141,8 +143,8 @@ async def main():
     # Build Application
     app = Application.builder().token(TOKEN).build()
 
-    # Configure APScheduler
-    scheduler = AsyncIOScheduler(timezone=ZoneInfo("UTC"))
+    # Configure APScheduler with Greenwich Mean Time
+    scheduler = AsyncIOScheduler(timezone=TIMEZONE)
 
     # 1. Main Game Signals (Runs every 6 minutes starting at minute 0)
     scheduler.add_job(
@@ -160,7 +162,7 @@ async def main():
         args=[app.bot],
     )
 
-    # 3. 30-Minute Game Session Change Reminders (At 12:30 AM, 7:30 AM, and 3:30 PM)
+    # 3. 30-Minute Game Session Change Reminders (At 12:30 AM, 7:30 AM, and 3:30 PM GMT)
     scheduler.add_job(
         send_30min_reminder,
         "cron",
