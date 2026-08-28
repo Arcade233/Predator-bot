@@ -15,8 +15,13 @@ TOKEN = os.environ.get(
 CHANNEL_ID = (
     "@protonxona_bot"  # Ensure the bot is added as an Admin in this channel!
 )
-# Timezone set to Greenwich Mean Time / Ghana local time
 TIMEZONE = ZoneInfo("Africa/Accra")
+
+# DIRECT STICKER URLS (No Telegram File ID needed!)
+STICKER_COIN_FLIP = "https://cdn-icons-png.flaticon.com/512/217/217853.png"
+STICKER_MINES = "https://cdn-icons-png.flaticon.com/512/616/616490.png"
+STICKER_AVIATOR = "https://cdn-icons-png.flaticon.com/512/7893/7893996.png"
+STICKER_SUCCESS = "https://cdn-icons-png.flaticon.com/512/190/190411.png"
 
 
 def build_mines_grid() -> str:
@@ -57,10 +62,13 @@ async def send_hourly_predictions(bot: Bot):
     now = datetime.datetime.now(TIMEZONE)
     current_hour = now.hour
 
+    sticker_url = None
+
     # 1. COIN FLIP SESSION (1:00 AM to 7:59 AM GMT)
     if 1 <= current_hour < 8:
         outcome = random.choice(["🪙 HEADS", "🪙 TAILS"])
         confidence = random.randint(91, 98)
+        sticker_url = STICKER_COIN_FLIP
         message = (
             "🪙 *1WIN COIN FLIP GAME* 🪙\n\n"
             f"🎯 *Predicted Result:* {outcome}\n"
@@ -71,6 +79,7 @@ async def send_hourly_predictions(bot: Bot):
     # 2. MINES SESSION (8:00 AM to 3:59 PM / 15:59 GMT)
     elif 8 <= current_hour < 16:
         grid = build_mines_grid()
+        sticker_url = STICKER_MINES
         message = (
             "🚀 *1WIN MINES GAME* 🚀\n\n"
             f"{grid}\n"
@@ -82,6 +91,7 @@ async def send_hourly_predictions(bot: Bot):
     # 3. AVIATOR PREDICTION SESSION (4:00 PM / 16:00 to 10:59 PM / 22:59 GMT)
     elif 16 <= current_hour < 23:
         multiplier = round(random.uniform(1.35, 3.50), 2)
+        sticker_url = STICKER_AVIATOR
         message = (
             "✈️ *1WIN AVIATOR PREDICTION* ✈️\n\n"
             f"🚀 *Auto Cashout Target:* {multiplier}x\n"
@@ -99,6 +109,10 @@ async def send_hourly_predictions(bot: Bot):
         )
 
     try:
+        # Send sticker image from web URL before text message
+        if sticker_url:
+            await bot.send_sticker(chat_id=CHANNEL_ID, sticker=sticker_url)
+
         await bot.send_message(
             chat_id=CHANNEL_ID, text=message, parse_mode="Markdown"
         )
@@ -126,6 +140,7 @@ async def send_30min_reminder(bot: Bot):
             "💰 *ACTION REQUIRED:* Deposit funds into your account now and wait for the upcoming game signals!"
         )
         try:
+            await bot.send_sticker(chat_id=CHANNEL_ID, sticker=STICKER_SUCCESS)
             await bot.send_message(
                 chat_id=CHANNEL_ID, text=reminder_text, parse_mode="Markdown"
             )
@@ -140,13 +155,10 @@ async def handle_ping(request):
 
 
 async def main():
-    # Build Application
     app = Application.builder().token(TOKEN).build()
-
-    # Configure APScheduler with Greenwich Mean Time
     scheduler = AsyncIOScheduler(timezone=TIMEZONE)
 
-    # 1. Main Game Signals (Runs every 6 minutes starting at minute 0)
+    # 1. Main Game Signals (Every 6 minutes)
     scheduler.add_job(
         send_hourly_predictions,
         "cron",
@@ -154,7 +166,7 @@ async def main():
         args=[app.bot],
     )
 
-    # 2. Pre-Signal Warning (Runs 1 minute before each game signal)
+    # 2. Pre-Signal Warning (1 minute prior)
     scheduler.add_job(
         send_1min_warning,
         "cron",
@@ -162,7 +174,7 @@ async def main():
         args=[app.bot],
     )
 
-    # 3. 30-Minute Game Session Change Reminders (At 12:30 AM, 7:30 AM, and 3:30 PM GMT)
+    # 3. 30-Minute Game Reminders
     scheduler.add_job(
         send_30min_reminder,
         "cron",
@@ -185,15 +197,11 @@ async def main():
     await site.start()
     print(f"HTTP dummy server running on port {port}")
 
-    # Initialize Application context
     async with app:
         await app.start()
-
-        # Send initial alert on startup
         print("Sending initial post on launch...")
         await send_hourly_predictions(app.bot)
 
-        # Keep event loop alive indefinitely
         try:
             await asyncio.Event().wait()
         except (KeyboardInterrupt, SystemExit):
