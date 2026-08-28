@@ -1,4 +1,4 @@
-import asyncio
+ import asyncio
 import datetime
 import os
 import random
@@ -28,31 +28,53 @@ def build_mines_grid() -> str:
     return grid_display
 
 
-async def send_hourly_predictions(bot: Bot):
-    # Fetch local current time (Explicit UTC / GMT timezone to avoid Android crashes)
+async def send_1min_warning(bot: Bot):
     now = datetime.datetime.now(ZoneInfo("UTC"))
     current_hour = now.hour
 
-    # 1. MINES SESSION (1:00 AM to 7:00 AM)
-    if 1 <= current_hour <= 7:
-        grid = build_mines_grid()
-        message = (
-            "🚀 *1WIN MINES SIGNAL* 🚀\n\n"
-            f"{grid}\n"
-            "🎯 *Recommended Mines:* 3\n"
-            "⭐ *Safe Stars:* 4\n"
-            "⚠️ _Accuracy: 98% (Next round in 6 mins)_"
-        )
+    # Do not send pre-signal alerts during offline hours (11 PM to 1 AM)
+    if current_hour == 0 or current_hour == 23 and now.minute > 54:
+        return
 
-    # 2. FLIP THE COIN SESSION (8:00 AM to 3:00 PM / 15:00)
-    elif 8 <= current_hour <= 15:
+    warning_text = (
+        "⚡ *PREPARE YOUR BETS!* ⚡\n\n"
+        "🔔 *Get ready for the next game!* The signal will drop in **1 minute**.\n"
+        "Open your 1Win app and stay alert!"
+    )
+
+    try:
+        await bot.send_message(
+            chat_id=CHANNEL_ID, text=warning_text, parse_mode="Markdown"
+        )
+        print(f"[{now.strftime('%H:%M:%S UTC')}] 1-minute alert sent.")
+    except Exception as e:
+        print(f"Failed to send 1-min alert to {CHANNEL_ID}: {e}")
+
+
+async def send_hourly_predictions(bot: Bot):
+    now = datetime.datetime.now(ZoneInfo("UTC"))
+    current_hour = now.hour
+
+    # 1. COIN FLIP SESSION (1:00 AM to 7:00 AM)
+    if 1 <= current_hour <= 7:
         outcome = random.choice(["🪙 HEADS", "🪙 TAILS"])
         confidence = random.randint(91, 98)
         message = (
-            "🪙 *1WIN COIN FLIP SIGNAL* 🪙\n\n"
+            "🪙 *1WIN COIN FLIP GAME* 🪙\n\n"
             f"🎯 *Predicted Result:* {outcome}\n"
             f"📊 *Bot Confidence:* {confidence}%\n\n"
-            "⚠️ _Bet within 2 minutes! Next signal in 6 mins._"
+            "⚠️ _Bet within 2 minutes! Next game in 6 mins._"
+        )
+
+    # 2. MINES SESSION (8:00 AM to 3:00 PM / 15:00)
+    elif 8 <= current_hour <= 15:
+        grid = build_mines_grid()
+        message = (
+            "🚀 *1WIN MINES GAME* 🚀\n\n"
+            f"{grid}\n"
+            "🎯 *Recommended Mines:* 3\n"
+            "⭐ *Safe Stars:* 4\n"
+            "⚠️ _Accuracy: 98% (Next game in 6 mins)_"
         )
 
     # 3. AVIATOR PREDICTION SESSION (4:00 PM / 16:00 to 11:00 PM / 23:00)
@@ -62,7 +84,7 @@ async def send_hourly_predictions(bot: Bot):
             "✈️ *1WIN AVIATOR PREDICTION* ✈️\n\n"
             f"🚀 *Auto Cashout Target:* {multiplier}x\n"
             "⏰ *Valid For:* Next Flight\n\n"
-            "⚠️ _Cash out strictly before target multiplier! Next signal in 6 mins._"
+            "⚠️ _Cash out strictly before target multiplier! Next game in 6 mins._"
         )
 
     # 4. GOOD NIGHT SESSION (11:01 PM to 12:59 AM)
@@ -70,7 +92,7 @@ async def send_hourly_predictions(bot: Bot):
         message = (
             "🌙 *GOOD NIGHT TRADERS!* 🌙\n\n"
             "The VIP Bot algorithms are now offline for maintenance.\n"
-            "Signals will resume tomorrow at *1:00 AM* with the Mines predictor.\n\n"
+            "Games will resume tomorrow at *1:00 AM* with the Coin Flip predictor.\n\n"
             "😴 _Rest up and practice sound risk management!_"
         )
 
@@ -78,9 +100,36 @@ async def send_hourly_predictions(bot: Bot):
         await bot.send_message(
             chat_id=CHANNEL_ID, text=message, parse_mode="Markdown"
         )
-        print(f"[{now.strftime('%H:%M:%S UTC')}] Signal sent to {CHANNEL_ID}")
+        print(f"[{now.strftime('%H:%M:%S UTC')}] Game signal sent to {CHANNEL_ID}")
     except Exception as e:
         print(f"Failed to send message to {CHANNEL_ID}: {e}")
+
+
+async def send_30min_reminder(bot: Bot):
+    now = datetime.datetime.now(ZoneInfo("UTC"))
+    hour = now.hour
+    next_game = None
+
+    if hour == 0:
+        next_game = "🪙 COIN FLIP 🪙"
+    elif hour == 7:
+        next_game = "🚀 MINES 🚀"
+    elif hour == 15:
+        next_game = "✈️ AVIATOR PREDICTION ✈️"
+
+    if next_game:
+        reminder_text = (
+            "🚨 *30-MINUTE GAME CHANGE WARNING* 🚨\n\n"
+            f"Attention Subscribers! The next game session (*{next_game}*) starts in 30 minutes!\n\n"
+            "💰 *ACTION REQUIRED:* Deposit funds into your account now and wait for the upcoming game signals!"
+        )
+        try:
+            await bot.send_message(
+                chat_id=CHANNEL_ID, text=reminder_text, parse_mode="Markdown"
+            )
+            print(f"[{now.strftime('%H:%M:%S UTC')}] 30-min reminder sent.")
+        except Exception as e:
+            print(f"Failed to send reminder to {CHANNEL_ID}: {e}")
 
 
 # HTTP handler for Render's port detection
@@ -95,11 +144,28 @@ async def main():
     # Configure APScheduler
     scheduler = AsyncIOScheduler(timezone=ZoneInfo("UTC"))
 
-    # Add job to scheduler (Runs every 6 minutes)
+    # 1. Main Game Signals (Runs every 6 minutes starting at minute 0)
     scheduler.add_job(
         send_hourly_predictions,
-        "interval",
-        minutes=6,
+        "cron",
+        minute="0,6,12,18,24,30,36,42,48,54",
+        args=[app.bot],
+    )
+
+    # 2. Pre-Signal Warning (Runs 1 minute before each game signal)
+    scheduler.add_job(
+        send_1min_warning,
+        "cron",
+        minute="5,11,17,23,29,35,41,47,53,59",
+        args=[app.bot],
+    )
+
+    # 3. 30-Minute Game Session Change Reminders (At 12:30 AM, 7:30 AM, and 3:30 PM)
+    scheduler.add_job(
+        send_30min_reminder,
+        "cron",
+        minute="30",
+        hour="0,7,15",
         args=[app.bot],
     )
 
@@ -111,8 +177,7 @@ async def main():
     web_app.router.add_get("/", handle_ping)
     runner = web.AppRunner(web_app)
     await runner.setup()
-    
-    # Render provides PORT in environment variables (defaults to 10000 if not found)
+
     port = int(os.environ.get("PORT", 10000))
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
@@ -122,8 +187,8 @@ async def main():
     async with app:
         await app.start()
 
-        # Send an immediate test post upon launching
-        print("Sending initial signal on launch...")
+        # Send initial alert on startup
+        print("Sending initial post on launch...")
         await send_hourly_predictions(app.bot)
 
         # Keep event loop alive indefinitely
