@@ -17,8 +17,12 @@ CHANNEL_ID = (
 )
 TIMEZONE = ZoneInfo("Africa/Accra")
 
-# MONEY STICKER (Applied across all signals and session reminders)
-MONEY_STICKER_URL = "https://cdn-icons-png.flaticon.com/512/2489/2489756.png"
+# REGISTRATION LINK
+REGISTRATION_LINK = "https://1win.com"  # Replace with your affiliate link
+
+# GLOBAL COUNTERS
+trade_count = 1
+current_balance = 500.00
 
 
 def build_mines_grid() -> str:
@@ -36,93 +40,116 @@ async def send_1min_warning(bot: Bot):
     now = datetime.datetime.now(TIMEZONE)
     current_hour = now.hour
 
-    # Do not send pre-signal alerts during offline hours (11 PM to 1 AM GMT)
     if current_hour == 0 or (current_hour == 23 and now.minute > 54):
         return
 
-    # Using blockquote ('>') for distinct visual container
-    warning_text = (
-        "🟡 **[ALERT] PREPARE YOUR BETS!** 🟡\n"
-        "> 🔔 *Get ready for the next game!*\n"
-        "> ⏳ Signal drops in **1 MINUTE**.\n"
-        "> \n"
-        "> 📱 Open your **1Win app** and stay ready! ⚡"
-    )
+    warning_text = "LAST SIGNAL 🗣️"
 
     try:
-        await bot.send_message(
-            chat_id=CHANNEL_ID, text=warning_text, parse_mode="Markdown"
-        )
-        print(f"[{now.strftime('%H:%M:%S GMT')}] 1-minute alert sent.")
+        await bot.send_message(chat_id=CHANNEL_ID, text=warning_text)
+        print(f"[{now.strftime('%H:%M:%S GMT')}] 'LAST SIGNAL' warning sent.")
     except Exception as e:
         print(f"Failed to send 1-min alert to {CHANNEL_ID}: {e}")
 
 
 async def send_hourly_predictions(bot: Bot):
+    global trade_count, current_balance
     now = datetime.datetime.now(TIMEZONE)
     current_hour = now.hour
 
-    message = ""
-
-    # 1. COIN FLIP SESSION (1:00 AM to 7:59 AM GMT)
-    if 1 <= current_hour < 8:
-        outcome = random.choice(["🪙 HEADS 🟡", "🪙 TAILS 🟢"])
-        confidence = random.randint(91, 98)
-        message = (
-            "🟢 **[LIVE SIGNAL] 1WIN COIN FLIP** 🟢\n"
-            "> \n"
-            f"> 🎯 **Predicted Result:** `{outcome}`\n"
-            f"> 📊 **Bot Confidence:** `{confidence}%`\n"
-            "> \n"
-            "> ⚠️ *Bet within 2 minutes! Next game in 6 mins.* 💸"
+    # 4. GOOD NIGHT / MAINTENANCE SESSION
+    if current_hour == 0 or current_hour >= 23:
+        night_text = (
+            "🌙 *GOOD NIGHT TRADERS!* 🌙\n\n"
+            "The VIP Bot algorithms are offline for maintenance.\n"
+            "Games resume tomorrow at *1:00 AM GMT*.\n\n"
+            "😴 _Rest up and manage your risk!_"
         )
+        try:
+            await bot.send_message(
+                chat_id=CHANNEL_ID, text=night_text, parse_mode="Markdown"
+            )
+        except Exception as e:
+            print(f"Failed to send goodnight message: {e}")
+        return
 
-    # 2. MINES SESSION (8:00 AM to 3:59 PM / 15:59 GMT)
-    elif 8 <= current_hour < 16:
+    # STEP 1: PREVIOUS TRADE RESULT (Matches screenshot style)
+    if trade_count > 1:
+        profit = round(random.uniform(50.0, 150.0), 2)
+        current_balance += profit
+        result_text = (
+            f"*{trade_count - 1}th TRADE* ✅\n\n"
+            f"💲 *Current balance ${current_balance:,.2f}*\n\n"
+            f"➡️ [REGISTRATION LINK]({REGISTRATION_LINK}) ⬅️"
+        )
+        try:
+            await bot.send_message(
+                chat_id=CHANNEL_ID,
+                text=result_text,
+                parse_mode="Markdown",
+                disable_web_page_preview=True,
+            )
+            await asyncio.sleep(2)  # Delay between messages
+        except Exception as e:
+            print(f"Failed to send trade result: {e}")
+
+    # STEP 2: SETUP & BET INFO
+    setup_text = ""
+    direction_text = ""
+
+    if 1 <= current_hour < 8:  # COIN FLIP
+        outcome = random.choice(["HEADS 🟢", "TAILS 🟢"])
+        bet_amount = random.choice([50, 100, 200, 350])
+        setup_text = (
+            "👉 *COIN FLIP (1WIN)*\n"
+            "⏱ *2 MINUTE*\n"
+            f"💲 *Use {bet_amount} $ from balance*\n\n"
+            f"➡️ [REGISTRATION LINK]({REGISTRATION_LINK}) ⬅️"
+        )
+        direction_text = f"*{outcome}*"
+
+    elif 8 <= current_hour < 16:  # MINES
         grid = build_mines_grid()
-        message = (
-            "🟢 **[LIVE SIGNAL] 1WIN MINES** 🟢\n"
-            "> \n"
-            f"{grid}\n"
-            "> 💣 **Recommended Mines:** `3`\n"
-            "> ⭐ **Safe Stars:** `4`\n"
-            "> \n"
-            "> ⚠️ *Accuracy: 98% (Next game in 6 mins)* 🤑"
+        setup_text = (
+            "👉 *MINES (1WIN)*\n"
+            "⏱ *3 MINUTE*\n"
+            "💲 *Use 200 $ from balance*\n\n"
+            f"➡️ [REGISTRATION LINK]({REGISTRATION_LINK}) ⬅️"
         )
+        direction_text = f"🚀 *SAFE TILES:*\n\n{grid}"
 
-    # 3. AVIATOR PREDICTION SESSION (4:00 PM / 16:00 to 10:59 PM / 22:59 GMT)
-    elif 16 <= current_hour < 23:
+    elif 16 <= current_hour < 23:  # AVIATOR
         multiplier = round(random.uniform(1.35, 3.50), 2)
-        message = (
-            "🟢 **[LIVE SIGNAL] 1WIN AVIATOR** 🟢\n"
-            "> \n"
-            f"> 🚀 **Auto Cashout Target:** `{multiplier}x`\n"
-            "> ⏰ **Valid For:** `Next Flight`\n"
-            "> \n"
-            "> ⚠️ *Cash out strictly before target multiplier!* 💵"
+        setup_text = (
+            "👉 *AVIATOR (1WIN)*\n"
+            "⏱ *NEXT FLIGHT*\n"
+            "💲 *Use 150 $ from balance*\n\n"
+            f"➡️ [REGISTRATION LINK]({REGISTRATION_LINK}) ⬅️"
         )
+        direction_text = f"UP 🟢 *Target:* `{multiplier}x`"
 
-    # 4. GOOD NIGHT SESSION (11:00 PM to 12:59 AM GMT)
-    else:
-        message = (
-            "🔴 **[OFFLINE] SESSION ENDED** 🔴\n"
-            "> \n"
-            "> 🌙 *The VIP Bot algorithms are offline for maintenance.*\n"
-            "> 🪙 Games resume tomorrow at **1:00 AM GMT**.\n"
-            "> \n"
-            "> 😴 *Rest up and manage your risk!* 💰"
-        )
-
+    # SEND STEP 2 (Setup info)
     try:
-        if 1 <= current_hour < 23:
-            await bot.send_sticker(chat_id=CHANNEL_ID, sticker=MONEY_STICKER_URL)
-
         await bot.send_message(
-            chat_id=CHANNEL_ID, text=message, parse_mode="Markdown"
+            chat_id=CHANNEL_ID,
+            text=setup_text,
+            parse_mode="Markdown",
+            disable_web_page_preview=True,
         )
-        print(f"[{now.strftime('%H:%M:%S GMT')}] Game signal sent to {CHANNEL_ID}")
+        print(f"[{now.strftime('%H:%M:%S GMT')}] Setup signal sent.")
+        
+        await asyncio.sleep(3)  # Wait 3 seconds before sending direction
+
+        # SEND STEP 3 (Direction / Action message like "UP 🟢")
+        await bot.send_message(
+            chat_id=CHANNEL_ID, text=direction_text, parse_mode="Markdown"
+        )
+        print(f"[{now.strftime('%H:%M:%S GMT')}] Direction signal sent.")
+
+        trade_count += 1
+
     except Exception as e:
-        print(f"Failed to send message to {CHANNEL_ID}: {e}")
+        print(f"Failed to send setup/direction signal: {e}")
 
 
 async def send_30min_reminder(bot: Bot):
@@ -131,28 +158,27 @@ async def send_30min_reminder(bot: Bot):
     next_game = None
 
     if hour == 0:
-        next_game = "🪙 COIN FLIP"
+        next_game = "COIN FLIP"
     elif hour == 7:
-        next_game = "🚀 MINES"
+        next_game = "MINES"
     elif hour == 15:
-        next_game = "✈️ AVIATOR PREDICTION"
+        next_game = "AVIATOR"
 
     if next_game:
         reminder_text = (
-            "🔵 **[INFO] 30-MINUTE GAME CHANGE** 🔵\n"
-            "> \n"
-            f"> 📢 Next session (**{next_game}**) starts in ⌛ **30 minutes**!\n"
-            "> \n"
-            "> 💰 *Deposit funds into your account now and prepare!* 🚀"
+            "🚨 *30-MINUTE SESSION WARNING* 🚨\n\n"
+            f"The next game session (*{next_game}*) starts in 30 minutes!\n\n"
+            f"➡️ [REGISTRATION LINK]({REGISTRATION_LINK}) ⬅️"
         )
         try:
-            await bot.send_sticker(chat_id=CHANNEL_ID, sticker=MONEY_STICKER_URL)
             await bot.send_message(
-                chat_id=CHANNEL_ID, text=reminder_text, parse_mode="Markdown"
+                chat_id=CHANNEL_ID,
+                text=reminder_text,
+                parse_mode="Markdown",
+                disable_web_page_preview=True,
             )
-            print(f"[{now.strftime('%H:%M:%S GMT')}] 30-min reminder sent.")
         except Exception as e:
-            print(f"Failed to send reminder to {CHANNEL_ID}: {e}")
+            print(f"Failed to send 30-min reminder: {e}")
 
 
 async def send_10min_transition(bot: Bot):
@@ -163,32 +189,31 @@ async def send_10min_transition(bot: Bot):
     next_game = None
 
     if hour == 0:
-        ended_game = "✈️ AVIATOR PREDICTION"
-        next_game = "🪙 COIN FLIP"
+        ended_game = "AVIATOR"
+        next_game = "COIN FLIP"
     elif hour == 7:
-        ended_game = "🪙 COIN FLIP"
-        next_game = "🚀 MINES"
+        ended_game = "COIN FLIP"
+        next_game = "MINES"
     elif hour == 15:
-        ended_game = "🚀 MINES"
-        next_game = "✈️ AVIATOR PREDICTION"
+        ended_game = "MINES"
+        next_game = "AVIATOR"
 
     if next_game and ended_game:
         transition_text = (
-            "🔵 **[INFO] SESSION TRANSITION** 🔵\n"
-            "> \n"
-            f"> 🛑 Previous *{ended_game}* session has ended.\n"
-            f"> ⏳ Next session (*{next_game}*) begins in **10 MINUTES**!\n"
-            "> \n"
-            "> 🚨 *Get ready and open your apps!* 💸"
+            "🏁 *SESSION ENDED* 🏁\n\n"
+            f"The *{ended_game}* session has closed.\n"
+            f"Next session (*{next_game}*) starts in **10 minutes**!\n\n"
+            f"➡️ [REGISTRATION LINK]({REGISTRATION_LINK}) ⬅️"
         )
         try:
-            await bot.send_sticker(chat_id=CHANNEL_ID, sticker=MONEY_STICKER_URL)
             await bot.send_message(
-                chat_id=CHANNEL_ID, text=transition_text, parse_mode="Markdown"
+                chat_id=CHANNEL_ID,
+                text=transition_text,
+                parse_mode="Markdown",
+                disable_web_page_preview=True,
             )
-            print(f"[{now.strftime('%H:%M:%S GMT')}] 10-min transition sent.")
         except Exception as e:
-            print(f"Failed to send transition to {CHANNEL_ID}: {e}")
+            print(f"Failed to send 10-min transition: {e}")
 
 
 # HTTP handler for Render's port detection
@@ -225,7 +250,7 @@ async def main():
         args=[app.bot],
     )
 
-    # 4. 10-Minute Transition Warnings (Session End & Next Session Alert)
+    # 4. 10-Minute Transition Warnings
     scheduler.add_job(
         send_10min_transition,
         "cron",
