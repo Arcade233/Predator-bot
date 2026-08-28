@@ -3,6 +3,7 @@ import datetime
 import os
 import random
 from zoneinfo import ZoneInfo
+from aiohttp import web
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telegram import Bot
 from telegram.ext import Application
@@ -82,11 +83,16 @@ async def send_hourly_predictions(bot: Bot):
         print(f"Failed to send message to {CHANNEL_ID}: {e}")
 
 
+# HTTP handler for Render's port detection
+async def handle_ping(request):
+    return web.Response(text="Bot is running!")
+
+
 async def main():
     # Build Application
     app = Application.builder().token(TOKEN).build()
 
-    # Configure APScheduler with explicit timezone for Android/Pydroid 3 support
+    # Configure APScheduler
     scheduler = AsyncIOScheduler(timezone=ZoneInfo("UTC"))
 
     # Add job to scheduler (Runs every 6 minutes)
@@ -99,6 +105,18 @@ async def main():
 
     scheduler.start()
     print("Channel Predictor Bot is running continuously...")
+
+    # Start HTTP server for Render port binding
+    web_app = web.Application()
+    web_app.router.add_get("/", handle_ping)
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+    
+    # Render provides PORT in environment variables (defaults to 10000 if not found)
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    print(f"HTTP dummy server running on port {port}")
 
     # Initialize Application context
     async with app:
@@ -114,6 +132,7 @@ async def main():
         except (KeyboardInterrupt, SystemExit):
             scheduler.shutdown()
             await app.stop()
+            await runner.cleanup()
 
 
 if __name__ == "__main__":
