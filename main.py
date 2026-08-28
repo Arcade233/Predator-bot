@@ -28,7 +28,7 @@ def build_mines_grid() -> str:
     for i in range(1, grid_size + 1):
         grid_display += "⭐ " if i in safe_tiles else "🟦 "
         if i % 5 == 0:
-            grid_display += "\n\n"
+            grid_display += "\n"
     return grid_display
 
 
@@ -40,10 +40,13 @@ async def send_1min_warning(bot: Bot):
     if current_hour == 0 or (current_hour == 23 and now.minute > 54):
         return
 
+    # Using blockquote ('>') for distinct visual container
     warning_text = (
-        "⚡🔥 *PREPARE YOUR BETS!* 🔥⚡\n\n\n"
-        "🔔⌛ *Get ready for the next game!* The signal will drop in ⏳ **1 minute**.\n\n\n"
-        "📱💰 Open your 1Win app, stay alert, and get ready to win! 🚀💎"
+        "🟡 **[ALERT] PREPARE YOUR BETS!** 🟡\n"
+        "> 🔔 *Get ready for the next game!*\n"
+        "> ⏳ Signal drops in **1 MINUTE**.\n"
+        "> \n"
+        "> 📱 Open your **1Win app** and stay ready! ⚡"
     )
 
     try:
@@ -66,40 +69,48 @@ async def send_hourly_predictions(bot: Bot):
         outcome = random.choice(["🪙 HEADS 🟡", "🪙 TAILS 🟢"])
         confidence = random.randint(91, 98)
         message = (
-            "🪙✨ *1WIN COIN FLIP GAME* ✨🪙\n\n\n"
-            f"🎯 *Predicted Result:* {outcome}\n\n"
-            f"📊⚡ *Bot Confidence:* {confidence}%\n\n\n"
-            "⚠️⏳ _Bet within 2 minutes! Next game in 6 mins._ 💸🔥"
+            "🟢 **[LIVE SIGNAL] 1WIN COIN FLIP** 🟢\n"
+            "> \n"
+            f"> 🎯 **Predicted Result:** `{outcome}`\n"
+            f"> 📊 **Bot Confidence:** `{confidence}%`\n"
+            "> \n"
+            "> ⚠️ *Bet within 2 minutes! Next game in 6 mins.* 💸"
         )
 
     # 2. MINES SESSION (8:00 AM to 3:59 PM / 15:59 GMT)
     elif 8 <= current_hour < 16:
         grid = build_mines_grid()
         message = (
-            "🚀💣 *1WIN MINES GAME* 💣🚀\n\n\n"
+            "🟢 **[LIVE SIGNAL] 1WIN MINES** 🟢\n"
+            "> \n"
             f"{grid}\n"
-            "🎯💣 *Recommended Mines:* 3\n\n"
-            "⭐💎 *Safe Stars:* 4\n\n\n"
-            "⚠️🎯 _Accuracy: 98% (Next game in 6 mins)_ 🤑⚡"
+            "> 💣 **Recommended Mines:** `3`\n"
+            "> ⭐ **Safe Stars:** `4`\n"
+            "> \n"
+            "> ⚠️ *Accuracy: 98% (Next game in 6 mins)* 🤑"
         )
 
     # 3. AVIATOR PREDICTION SESSION (4:00 PM / 16:00 to 10:59 PM / 22:59 GMT)
     elif 16 <= current_hour < 23:
         multiplier = round(random.uniform(1.35, 3.50), 2)
         message = (
-            "✈️💥 *1WIN AVIATOR PREDICTION* 💥✈️\n\n\n"
-            f"🚀📈 *Auto Cashout Target:* {multiplier}x\n\n"
-            "⏰🎯 *Valid For:* Next Flight\n\n\n"
-            "⚠️🛑 _Cash out strictly before target multiplier! Next game in 6 mins._ 💵✨"
+            "🟢 **[LIVE SIGNAL] 1WIN AVIATOR** 🟢\n"
+            "> \n"
+            f"> 🚀 **Auto Cashout Target:** `{multiplier}x`\n"
+            "> ⏰ **Valid For:** `Next Flight`\n"
+            "> \n"
+            "> ⚠️ *Cash out strictly before target multiplier!* 💵"
         )
 
     # 4. GOOD NIGHT SESSION (11:00 PM to 12:59 AM GMT)
     else:
         message = (
-            "🌙💤 *GOOD NIGHT TRADERS!* 💤🌙\n\n\n"
-            "🛠️🤖 The VIP Bot algorithms are now offline for maintenance.\n\n"
-            "🪙⚡ Games will resume tomorrow at *1:00 AM GMT* with the Coin Flip predictor.\n\n\n"
-            "😴🛌 _Rest up and practice sound risk management!_ 💰🔒"
+            "🔴 **[OFFLINE] SESSION ENDED** 🔴\n"
+            "> \n"
+            "> 🌙 *The VIP Bot algorithms are offline for maintenance.*\n"
+            "> 🪙 Games resume tomorrow at **1:00 AM GMT**.\n"
+            "> \n"
+            "> 😴 *Rest up and manage your risk!* 💰"
         )
 
     try:
@@ -120,17 +131,19 @@ async def send_30min_reminder(bot: Bot):
     next_game = None
 
     if hour == 0:
-        next_game = "🪙 COIN FLIP 🪙"
+        next_game = "🪙 COIN FLIP"
     elif hour == 7:
-        next_game = "🚀 MINES 🚀"
+        next_game = "🚀 MINES"
     elif hour == 15:
-        next_game = "✈️ AVIATOR PREDICTION ✈️"
+        next_game = "✈️ AVIATOR PREDICTION"
 
     if next_game:
         reminder_text = (
-            "🚨🔔 *30-MINUTE GAME CHANGE WARNING* 🔔🚨\n\n\n"
-            f"📢 Attention Subscribers! The next game session (*{next_game}*) starts in ⌛ 30 minutes!\n\n\n"
-            "💰💳 *ACTION REQUIRED:* Deposit funds into your account now and wait for the upcoming game signals! 🚀🔥"
+            "🔵 **[INFO] 30-MINUTE GAME CHANGE** 🔵\n"
+            "> \n"
+            f"> 📢 Next session (**{next_game}**) starts in ⌛ **30 minutes**!\n"
+            "> \n"
+            "> 💰 *Deposit funds into your account now and prepare!* 🚀"
         )
         try:
             await bot.send_sticker(chat_id=CHANNEL_ID, sticker=MONEY_STICKER_URL)
@@ -150,21 +163,23 @@ async def send_10min_transition(bot: Bot):
     next_game = None
 
     if hour == 0:
-        ended_game = "✈️ AVIATOR PREDICTION ✈️"
-        next_game = "🪙 COIN FLIP 🪙"
+        ended_game = "✈️ AVIATOR PREDICTION"
+        next_game = "🪙 COIN FLIP"
     elif hour == 7:
-        ended_game = "🪙 COIN FLIP 🪙"
-        next_game = "🚀 MINES 🚀"
+        ended_game = "🪙 COIN FLIP"
+        next_game = "🚀 MINES"
     elif hour == 15:
-        ended_game = "🚀 MINES 🚀"
-        next_game = "✈️ AVIATOR PREDICTION ✈️"
+        ended_game = "🚀 MINES"
+        next_game = "✈️ AVIATOR PREDICTION"
 
     if next_game and ended_game:
         transition_text = (
-            "🛑🏁 *SESSION ENDED & NEW SESSION ALERT!* 🏁🛑\n\n\n"
-            f"📊 The previous *{ended_game}* session has officially ended.\n\n"
-            f"⏳ The next session (*{next_game}*) begins in **10 minutes**!\n\n\n"
-            "🚨👀 *STAY ALERT!* Get ready, open your apps, and prepare your bankroll! 💸🔥🚀"
+            "🔵 **[INFO] SESSION TRANSITION** 🔵\n"
+            "> \n"
+            f"> 🛑 Previous *{ended_game}* session has ended.\n"
+            f"> ⏳ Next session (*{next_game}*) begins in **10 MINUTES**!\n"
+            "> \n"
+            "> 🚨 *Get ready and open your apps!* 💸"
         )
         try:
             await bot.send_sticker(chat_id=CHANNEL_ID, sticker=MONEY_STICKER_URL)
