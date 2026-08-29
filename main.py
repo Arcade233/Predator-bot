@@ -115,8 +115,34 @@ def build_message_payload(current_hour: int) -> str:
         )
 
 # ==========================================
-# ASYNC BOT DISPATCHERS
+# ASYNC BOT DISPATCHERS & EDITORS
 # ==========================================
+async def auto_update_caption_win(bot: Bot, message_id: int, original_caption: str, delay_seconds: int = 180):
+    """Waits non-blockingly for the delay duration, then updates the photo caption to a WIN status."""
+    await asyncio.sleep(delay_seconds)
+    
+    # Construct the updated WIN text based on signal type
+    win_caption = (
+        original_caption
+        .replace("🟢 *LIVE SIGNAL", "✅ *SIGNAL PASSED — WIN RESULT* ✅\n🟢 *LIVE SIGNAL")
+        .replace("⚠️ *Bet within 2 minutes! Next game in 6 mins.* 💸", "📊 *Status:* `✅ 100% WIN ACCURACY` 💸")
+        .replace("⚠️ *Accuracy: 98% (Next game in 6 mins)* 🤑", "📊 *Status:* `✅ 100% WIN ACCURACY` 🤑")
+        .replace("⚠️ *Cash out strictly before target multiplier!* 💵", "📊 *Status:* `✅ TARGET REACHED — WIN` 💵")
+    )
+
+    try:
+        await bot.edit_message_caption(
+            chat_id=CHANNEL_ID,
+            message_id=message_id,
+            caption=win_caption,
+            parse_mode="Markdown"
+        )
+        now = datetime.datetime.now(TIMEZONE)
+        logger.info(f"[{now.strftime('%H:%M:%S GMT')}] Success: Message ID {message_id} updated to WIN.")
+    except TelegramError as e:
+        logger.warning(f"Could not edit caption for message {message_id}: {e}")
+
+
 async def safe_send_message(bot: Bot, text: str, label: str):
     """Dispatches Telegram text messages with exponential retry logic."""
     for attempt in range(1, 4):
@@ -138,11 +164,11 @@ async def safe_send_message(bot: Bot, text: str, label: str):
             break
 
 
-async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str):
-    """Dispatches Telegram photo messages with retry logic, falling back to text if media fails."""
+async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, auto_win_delay: int = 180):
+    """Dispatches Telegram photo messages and schedules a background task to auto-edit the caption to WIN."""
     for attempt in range(1, 4):
         try:
-            await bot.send_photo(
+            sent_message = await bot.send_photo(
                 chat_id=CHANNEL_ID,
                 photo=photo_url,
                 caption=caption,
@@ -150,6 +176,18 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str):
             )
             now = datetime.datetime.now(TIMEZONE)
             logger.info(f"[{now.strftime('%H:%M:%S GMT')}] Success: Photo {label} posted to {CHANNEL_ID}")
+
+            # Schedule the non-blocking background task to edit caption to WIN after delay
+            if auto_win_delay > 0 and sent_message:
+                asyncio.create_task(
+                    auto_update_caption_win(
+                        bot=bot,
+                        message_id=sent_message.message_id,
+                        original_caption=caption,
+                        delay_seconds=auto_win_delay
+                    )
+                )
+
             return
         except TelegramError as te:
             logger.warning(f"Attempt {attempt} failed for Photo {label}: {te}")
@@ -162,7 +200,9 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str):
     logger.info(f"Attempting text fallback for {label}...")
     await safe_send_message(bot, caption, f"{label} (Text Fallback)")
 
-
+# ==========================================
+# SCHEDULED EVENTS
+# ==========================================
 async def send_1min_warning(bot: Bot):
     now = datetime.datetime.now(TIMEZONE)
     if now.hour == 0 or (now.hour == 23 and now.minute > 54):
@@ -170,9 +210,12 @@ async def send_1min_warning(bot: Bot):
 
     text = (
         "🟡 *ALERT PREPARE YOUR BETS!* 🟡\n"
-        
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        ">\n"
         "> 🔔 *Get ready for the next game!*\n"
+        ">\n"
         "> ⏳ *Signal drops in 1 MINUTE.*\n"
+        ">\n"
         "> 📱 *Open your 1Win app and stay ready!* ⚡\n"
         "━━━━━━━━━━━━━━━━━━━━━━"
     )
@@ -189,7 +232,8 @@ async def send_hourly_predictions(bot: Bot):
             bot=bot,
             photo_url=COIN_FLIP_SIGNAL_IMAGE_URL,
             caption=payload,
-            label=f"Coin Flip Signal (Hour {now.hour})"
+            label=f"Coin Flip Signal (Hour {now.hour})",
+            auto_win_delay=180
         )
     # 2. Mines Session (08:00 - 15:59 GMT)
     elif 8 <= now.hour < 16:
@@ -197,7 +241,8 @@ async def send_hourly_predictions(bot: Bot):
             bot=bot,
             photo_url=MINES_SIGNAL_IMAGE_URL,
             caption=payload,
-            label=f"Mines Signal (Hour {now.hour})"
+            label=f"Mines Signal (Hour {now.hour})",
+            auto_win_delay=180
         )
     # 3. Aviator Session (16:00 - 22:59 GMT)
     elif 16 <= now.hour < 23:
@@ -205,7 +250,8 @@ async def send_hourly_predictions(bot: Bot):
             bot=bot,
             photo_url=AVIATOR_SIGNAL_IMAGE_URL,
             caption=payload,
-            label=f"Aviator Signal (Hour {now.hour})"
+            label=f"Aviator Signal (Hour {now.hour})",
+            auto_win_delay=180
         )
     # 4. Offline Maintenance Session
     else:
@@ -227,11 +273,14 @@ async def send_30min_reminder(bot: Bot):
         reminder_text = (
             "🔵 *INFO 30-MINUTE GAME CHANGE* 🔵\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
+            ">\n"
             f"> 📢 *Next session ({next_game}) starts in ⌛ 30 minutes!*\n"
+            ">\n"
             "> 💰 *Deposit funds into your account now and prepare!* 🚀\n"
             "━━━━━━━━━━━━━━━━━━━━━━"
         )
-        await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})")
+        # Reminders do not need WIN edits, so auto_win_delay=0
+        await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})", auto_win_delay=0)
 
 
 async def send_10min_transition(bot: Bot):
@@ -252,11 +301,14 @@ async def send_10min_transition(bot: Bot):
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             ">\n"
             f"> 🛑 *Previous {ended_game} session has ended.*\n"
+            ">\n"
             f"> ⏳ *Next session ({next_game}) begins in 10 MINUTES!*\n"
+            ">\n"
             "> 🚨 *Get ready and open your apps!* 💸\n"
             "━━━━━━━━━━━━━━━━━━━━━━"
         )
-        await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})")
+        # Transitions do not need WIN edits, so auto_win_delay=0
+        await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0)
 
 # ==========================================
 # WEB HEALTH CHECK HANDLER
