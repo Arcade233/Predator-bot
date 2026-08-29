@@ -27,11 +27,9 @@ AVIATOR_IMAGE_URL = "https://carder.top/imagens/1787956019513-490226521.jpg"
 MINES_IMAGE_URL = "https://carder.top/imagens/1787956064400-230189890.jpg"
 COIN_FLIP_IMAGE_URL = "https://carder.top/imagens/1787956065622-306701028.jpg"
 
-# SIGNAL IMAGE (Coin Flip Only)
+# SIGNAL IMAGES (Dedicated for each active game mode)
 COIN_FLIP_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787987001471-864263496.jpg"
-#SIGNAL IMAGE (Mines Only)
 MINES_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787988758434-575219937.jpg"
-#SIGNAL IMAGE ( Aviator Only)
 AVIATOR_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787989274632-715169951.jpg"
 
 # ==========================================
@@ -172,9 +170,13 @@ async def send_1min_warning(bot: Bot):
 
     text = (
         "🟡 *ALERT PREPARE YOUR BETS!* 🟡\n"
-        " 🔔 *Get ready for the next game!*\n"
-        " ⏳ *Signal drops in 1 MINUTE.*\n"
-        " 📱 *Open your 1Win app and stay ready!* ⚡\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        ">\n"
+        "> 🔔 *Get ready for the next game!*\n"
+        ">\n"
+        "> ⏳ *Signal drops in 1 MINUTE.*\n"
+        ">\n"
+        "> 📱 *Open your 1Win app and stay ready!* ⚡\n"
         "━━━━━━━━━━━━━━━━━━━━━━"
     )
     await safe_send_message(bot, text, "1-Min Alert")
@@ -184,7 +186,7 @@ async def send_hourly_predictions(bot: Bot):
     now = datetime.datetime.now(TIMEZONE)
     payload = build_message_payload(now.hour)
     
-    # 1. Coin Flip Session (01:00 - 07:59 GMT) -> Send as Photo Signal
+    # 1. Coin Flip Session (01:00 - 07:59 GMT)
     if 1 <= now.hour < 8:
         await safe_send_photo(
             bot=bot,
@@ -192,7 +194,23 @@ async def send_hourly_predictions(bot: Bot):
             caption=payload,
             label=f"Coin Flip Signal (Hour {now.hour})"
         )
-    # 2. Mines / Aviator / Offline Sessions -> Send as Text Signal
+    # 2. Mines Session (08:00 - 15:59 GMT)
+    elif 8 <= now.hour < 16:
+        await safe_send_photo(
+            bot=bot,
+            photo_url=MINES_SIGNAL_IMAGE_URL,
+            caption=payload,
+            label=f"Mines Signal (Hour {now.hour})"
+        )
+    # 3. Aviator Session (16:00 - 22:59 GMT)
+    elif 16 <= now.hour < 23:
+        await safe_send_photo(
+            bot=bot,
+            photo_url=AVIATOR_SIGNAL_IMAGE_URL,
+            caption=payload,
+            label=f"Aviator Signal (Hour {now.hour})"
+        )
+    # 4. Offline Maintenance Session
     else:
         await safe_send_message(bot, payload, f"Main Signal (Hour {now.hour})")
 
@@ -222,6 +240,7 @@ async def send_30min_reminder(bot: Bot):
 
 
 async def send_10min_transition(bot: Bot):
+    """Fires at minute 50 of hours 0, 7, 15 as the final reminder before game section changes."""
     now = datetime.datetime.now(TIMEZONE)
     hour = now.hour
 
@@ -278,7 +297,7 @@ async def main():
         args=[app.bot]
     )
 
-    # 3. 30-Minute Schedule Announcements
+    # 3. 30-Minute Schedule Announcements (Fires at minute 30 before transition hour)
     scheduler.add_job(
         send_30min_reminder,
         "cron",
@@ -287,7 +306,7 @@ async def main():
         args=[app.bot]
     )
 
-    # 4. 10-Minute Transition Alerts
+    # 4. 10-Minute Transition Alerts (Final alert before session change at top of hour)
     scheduler.add_job(
         send_10min_transition,
         "cron",
