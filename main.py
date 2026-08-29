@@ -154,7 +154,6 @@ async def send_30min_reminder(bot: Bot):
             "⠀"
         )
         try:
-            # Send Coin Flip photo at 00:30 GMT
             if hour == 0:
                 await bot.send_photo(
                     chat_id=CHANNEL_ID,
@@ -162,7 +161,6 @@ async def send_30min_reminder(bot: Bot):
                     caption=reminder_text,
                     parse_mode="Markdown",
                 )
-            # Send Mines photo at 07:30 GMT
             elif hour == 7:
                 await bot.send_photo(
                     chat_id=CHANNEL_ID,
@@ -170,7 +168,6 @@ async def send_30min_reminder(bot: Bot):
                     caption=reminder_text,
                     parse_mode="Markdown",
                 )
-            # Send Aviator photo at 15:30 GMT
             elif hour == 15:
                 await bot.send_photo(
                     chat_id=CHANNEL_ID,
@@ -216,7 +213,6 @@ async def send_10min_transition(bot: Bot):
             "⠀"
         )
         try:
-            # Send Coin Flip photo at 00:50 GMT (10 mins before Coin Flip starts at 1:00 AM)
             if hour == 0:
                 await bot.send_photo(
                     chat_id=CHANNEL_ID,
@@ -224,7 +220,6 @@ async def send_10min_transition(bot: Bot):
                     caption=transition_text,
                     parse_mode="Markdown",
                 )
-            # Send Mines photo at 07:50 GMT (10 mins before Mines starts at 8:00 AM)
             elif hour == 7:
                 await bot.send_photo(
                     chat_id=CHANNEL_ID,
@@ -232,7 +227,6 @@ async def send_10min_transition(bot: Bot):
                     caption=transition_text,
                     parse_mode="Markdown",
                 )
-            # Send Aviator photo at 15:50 GMT (10 mins before Aviator starts at 4:00 PM)
             elif hour == 15:
                 await bot.send_photo(
                     chat_id=CHANNEL_ID,
@@ -249,8 +243,9 @@ async def send_10min_transition(bot: Bot):
             print(f"Failed to send transition to {CHANNEL_ID}: {e}")
 
 
-# HTTP handler for Render's port detection
+# HTTP handler to keep Render awake when pinged by UptimeRobot
 async def handle_ping(request):
+    print("Keep-alive ping received.")
     return web.Response(text="Bot is running!")
 
 
@@ -311,12 +306,18 @@ async def main():
         print("Sending initial post on launch...")
         await send_hourly_predictions(app.bot)
 
-        try:
-            await asyncio.Event().wait()
-        except (KeyboardInterrupt, SystemExit):
-            scheduler.shutdown()
-            await app.stop()
-            await runner.cleanup()
+        # Resilient infinite loop preventing disconnect crashes
+        while True:
+            try:
+                await asyncio.Event().wait()
+            except (KeyboardInterrupt, SystemExit):
+                scheduler.shutdown()
+                await app.stop()
+                await runner.cleanup()
+                break
+            except Exception as e:
+                print(f"Temporary connection error caught: {e}. Retrying in 5 seconds...")
+                await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
