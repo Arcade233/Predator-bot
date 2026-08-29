@@ -31,6 +31,8 @@ COIN_FLIP_IMAGE_URL = "https://carder.top/imagens/1787956065622-306701028.jpg"
 COIN_FLIP_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787987001471-864263496.jpg"
 #SIGNAL IMAGE (Mines Only)
 MINES_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787988758434-575219937.jpg"
+#SIGNAL IMAGE ( Aviator Only)
+AVIATOR_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787989274632-715169951.jpg"
 
 # ==========================================
 # SIGNAL BUILDERS & FORMATTERS
