@@ -170,12 +170,9 @@ async def send_1min_warning(bot: Bot):
 
     text = (
         "🟡 *ALERT PREPARE YOUR BETS!* 🟡\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        ">\n"
+        
         "> 🔔 *Get ready for the next game!*\n"
-        ">\n"
         "> ⏳ *Signal drops in 1 MINUTE.*\n"
-        ">\n"
         "> 📱 *Open your 1Win app and stay ready!* ⚡\n"
         "━━━━━━━━━━━━━━━━━━━━━━"
     )
@@ -230,9 +227,7 @@ async def send_30min_reminder(bot: Bot):
         reminder_text = (
             "🔵 *INFO 30-MINUTE GAME CHANGE* 🔵\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
-            ">\n"
             f"> 📢 *Next session ({next_game}) starts in ⌛ 30 minutes!*\n"
-            ">\n"
             "> 💰 *Deposit funds into your account now and prepare!* 🚀\n"
             "━━━━━━━━━━━━━━━━━━━━━━"
         )
@@ -257,9 +252,7 @@ async def send_10min_transition(bot: Bot):
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             ">\n"
             f"> 🛑 *Previous {ended_game} session has ended.*\n"
-            ">\n"
             f"> ⏳ *Next session ({next_game}) begins in 10 MINUTES!*\n"
-            ">\n"
             "> 🚨 *Get ready and open your apps!* 💸\n"
             "━━━━━━━━━━━━━━━━━━━━━━"
         )
