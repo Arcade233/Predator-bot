@@ -59,13 +59,13 @@ def build_message_payload(current_hour: int) -> str:
         return (
             "💎 *VIP AI SIGNAL — COIN FLIP* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
-            ">\n"
-            f"> 🎯 *PREDICTED SIDE:* `{outcome}`\n"
-            f"> ⚡ *BOT CONFIDENCE:* `{confidence}%`\n"
-            ">\n"
-            "> ⏰ *STATUS:* `Active Entry`\n"
-            f"> 🔄 *NEXT SIGNAL:* `In {next_mins} Minutes`\n"
-            ">\n"
+            "\n"
+            f" 🎯 *PREDICTED SIDE:* `{outcome}`\n"
+            f" ⚡ *BOT CONFIDENCE:* `{confidence}%`\n"
+            "\n"
+            " ⏰ *STATUS:* `Active Entry`\n"
+            f" 🔄 *NEXT SIGNAL:* `In {next_mins} Minutes`\n"
+            "\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             "📌 *Manage risk properly • Place entry now!*"
         )
@@ -78,29 +78,29 @@ def build_message_payload(current_hour: int) -> str:
         return (
             "💎 *VIP AI SIGNAL — MINES* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
-            ">\n"
+            "\n"
             f"{grid}\n"
-            ">\n"
-            "> 💣 *TRAPS:* `3 Mines`\n"
-            "> ⭐ *SAFE LOCATIONS:* `4 Stars`\n"
-            f"> 🎯 *ACCURACY RATING:* `{accuracy}%`\n"
-            f"> 🔄 *NEXT ROUND:* `In {next_mins} Minutes`\n"
-            ">\n"
+            "\n"
+            " 💣 *TRAPS:* `3 Mines`\n"
+            " ⭐ *SAFE LOCATIONS:* `4 Stars`\n"
+            f" 🎯 *ACCURACY RATING:* `{accuracy}%`\n"
+            f" 🔄 *NEXT ROUND:* `In {next_mins} Minutes`\n"
+            "\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             "📌 *Open app & tap matching tiles!*"
         )
 
     # 3. AVIATOR SESSION (16:00 - 22:59 GMT)
     elif 16 <= current_hour < 23:
-        multiplier = round(random.uniform(1.45, 3.80), 2)  # Customizable multiplier range
+        multiplier = round(random.uniform(1.25, 2.00), 2)  # Customizable multiplier range
         return (
             "💎 *VIP AI SIGNAL — AVIATOR* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
-            ">\n"
-            f"> 🚀 *TARGET CASHOUT:* `{multiplier}x`\n"
-            "> ⏰ *ENTRY:* `Next Round Only`\n"
-            "> 🛡️ *STRATEGY:* `Strict Auto-Cashout`\n"
-            ">\n"
+            "\n"
+            f" 🚀 *TARGET CASHOUT:* `{multiplier}x`\n"
+            " ⏰ *ENTRY:* `Next Round Only`\n"
+            " 🛡️ *STRATEGY:* `Strict Auto-Cashout`\n"
+            "\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             "📌 *Cash out strictly before target multiplier!*"
         )
