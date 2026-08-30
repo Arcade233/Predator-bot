@@ -32,6 +32,9 @@ COIN_FLIP_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787987001471-864263496
 MINES_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787988758434-575219937.jpg"
 AVIATOR_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787989274632-715169951.jpg"
 
+# DEFAULT AFFILIATE / BETTING APP LINK (Change this to your active affiliate link)
+BETTING_APP_URL = os.environ.get("BETTING_APP_URL", "https://melbet-affiliate.com")
+
 # ==========================================
 # SIGNAL BUILDERS & FORMATTERS
 # ==========================================
@@ -56,7 +59,7 @@ def build_message_payload(current_hour: int) -> str:
         outcome = random.choice(["🪙 HEADS 🟡", "🪙 TAILS 🟢"])
         confidence = random.randint(91, 98)
         return (
-            "🟢 *LIVE SIGNAL — 1WIN COIN FLIP* 🟢\n"
+            "🟢 *LIVE SIGNAL — COIN FLIP* 🟢\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             ">\n"
             f"> 🎯 *Predicted Result:* `{outcome}`\n"
@@ -65,14 +68,14 @@ def build_message_payload(current_hour: int) -> str:
             "> ⚠️ *Bet within 2 minutes! Next game in 6 mins.* 💸\n"
             ">\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "📲 [Open 1Win App](https://1win.com) | Manage Risk Wisely"
+            f"📲 [Open Official Platform]({BETTING_APP_URL}) | Manage Risk Wisely"
         )
 
     # 2. MINES SESSION (08:00 - 15:59 GMT)
     elif 8 <= current_hour < 16:
         grid = build_mines_grid()
         return (
-            "🟢 *LIVE SIGNAL — 1WIN MINES* 🟢\n"
+            "🟢 *LIVE SIGNAL — MINES PREDICTION* 🟢\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             ">\n"
             f"{grid}\n"
@@ -82,14 +85,14 @@ def build_message_payload(current_hour: int) -> str:
             "> ⚠️ *Accuracy: 98% (Next game in 6 mins)* 🤑\n"
             ">\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "📲 [Open 1Win App](https://1win.com) | Next round in 6 mins"
+            f"📲 [Open Official Platform]({BETTING_APP_URL}) | Next round in 6 mins"
         )
 
     # 3. AVIATOR SESSION (16:00 - 22:59 GMT)
     elif 16 <= current_hour < 23:
         multiplier = round(random.uniform(1.35, 3.50), 2)
         return (
-            "🟢 *LIVE SIGNAL — 1WIN AVIATOR* 🟢\n"
+            "🟢 *LIVE SIGNAL — AVIATOR CRASH* 🟢\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             ">\n"
             f"> 🚀 *Auto Cashout Target:* `{multiplier}x`\n"
@@ -97,7 +100,7 @@ def build_message_payload(current_hour: int) -> str:
             "> ⚠️ *Cash out strictly before target multiplier!* 💵\n"
             ">\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "📲 [Open 1Win App](https://1win.com) | Cash out before target!"
+            f"📲 [Open Official Platform]({BETTING_APP_URL}) | Cash out before target!"
         )
 
     # 4. MAINTENANCE / OFFLINE (23:00 - 00:59 GMT)
@@ -216,7 +219,7 @@ async def send_1min_warning(bot: Bot):
         ">\n"
         "> ⏳ *Signal drops in 1 MINUTE.*\n"
         ">\n"
-        "> 📱 *Open your 1Win app and stay ready!* ⚡\n"
+        f"> 📱 *Open your [Betting App]({BETTING_APP_URL}) and stay ready!* ⚡\n"
         "━━━━━━━━━━━━━━━━━━━━━━"
     )
     await safe_send_message(bot, text, "1-Min Alert")
@@ -279,7 +282,6 @@ async def send_30min_reminder(bot: Bot):
             "> 💰 *Deposit funds into your account now and prepare!* 🚀\n"
             "━━━━━━━━━━━━━━━━━━━━━━"
         )
-        # Reminders do not need WIN edits, so auto_win_delay=0
         await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})", auto_win_delay=0)
 
 
@@ -307,7 +309,6 @@ async def send_10min_transition(bot: Bot):
             "> 🚨 *Get ready and open your apps!* 💸\n"
             "━━━━━━━━━━━━━━━━━━━━━━"
         )
-        # Transitions do not need WIN edits, so auto_win_delay=0
         await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0)
 
 # ==========================================
@@ -342,7 +343,7 @@ async def main():
         args=[app.bot]
     )
 
-    # 3. 30-Minute Schedule Announcements (Fires at minute 30 before transition hour)
+    # 3. 30-Minute Schedule Announcements
     scheduler.add_job(
         send_30min_reminder,
         "cron",
@@ -351,7 +352,7 @@ async def main():
         args=[app.bot]
     )
 
-    # 4. 10-Minute Transition Alerts (Final alert before session change at top of hour)
+    # 4. 10-Minute Transition Alerts
     scheduler.add_job(
         send_10min_transition,
         "cron",
