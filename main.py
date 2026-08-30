@@ -33,7 +33,7 @@ MINES_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787988758434-575219937.jpg
 AVIATOR_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787989274632-715169951.jpg"
 
 # DEFAULT AFFILIATE / BETTING APP LINK (Change this to your active affiliate link)
-BETTING_APP_URL = os.environ.get("BETTING_APP_URL", "https://melbet-affiliate.com")
+BETTING_APP_URL = os.environ.get("")
 
 # ==========================================
 # SIGNAL BUILDERS & FORMATTERS
