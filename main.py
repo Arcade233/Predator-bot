@@ -32,9 +32,6 @@ COIN_FLIP_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787987001471-864263496
 MINES_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787988758434-575219937.jpg"
 AVIATOR_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787989274632-715169951.jpg"
 
-# DEFAULT AFFILIATE / BETTING APP LINK (Change this to your active affiliate link)
-BETTING_APP_URL = os.environ.get
-
 # ==========================================
 # SIGNAL BUILDERS & FORMATTERS
 # ==========================================
@@ -52,69 +49,74 @@ def build_mines_grid() -> str:
 
 
 def build_message_payload(current_hour: int) -> str:
-    """Constructs Markdown templates based on the active session window."""
+    """Constructs stylized Markdown templates with randomized timers & parameters."""
     
     # 1. COIN FLIP SESSION (01:00 - 07:59 GMT)
     if 1 <= current_hour < 8:
         outcome = random.choice(["🪙 HEADS 🟡", "🪙 TAILS 🟢"])
-        confidence = random.randint(91, 98)
+        confidence = random.randint(92, 99)
+        next_mins = random.randint(4, 7)  # Randomized next signal text
         return (
-            "🟢 *LIVE SIGNAL — COIN FLIP* 🟢\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "💎 *VIP AI SIGNAL — COIN FLIP* 💎\n"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             ">\n"
-            f"> 🎯 *Predicted Result:* `{outcome}`\n"
-            f"> 📊 *Bot Confidence:* `{confidence}%`\n"
+            f"> 🎯 *PREDICTED SIDE:* `{outcome}`\n"
+            f"> ⚡ *BOT CONFIDENCE:* `{confidence}%`\n"
             ">\n"
-            "> ⚠️ *Bet within 2 minutes! Next game in 6 mins.* 💸\n"
+            "> ⏰ *STATUS:* `Active Entry`\n"
+            f"> 🔄 *NEXT SIGNAL:* `In {next_mins} Minutes`\n"
             ">\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"📲 [Open Official Platform]({BETTING_APP_URL}) | Manage Risk Wisely"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
+            "📌 *Manage risk properly • Place entry now!*"
         )
 
     # 2. MINES SESSION (08:00 - 15:59 GMT)
     elif 8 <= current_hour < 16:
         grid = build_mines_grid()
+        accuracy = round(random.uniform(96.0, 99.4), 1)  # Dynamic accuracy rating
+        next_mins = random.randint(3, 8)
         return (
-            "🟢 *LIVE SIGNAL — MINES PREDICTION* 🟢\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "💎 *VIP AI SIGNAL — MINES* 💎\n"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             ">\n"
             f"{grid}\n"
             ">\n"
-            "> 💣 *Recommended Mines:* `3`\n"
-            "> ⭐ *Safe Stars:* `4`\n"
-            "> ⚠️ *Accuracy: 98% (Next game in 6 mins)* 🤑\n"
+            "> 💣 *TRAPS:* `3 Mines`\n"
+            "> ⭐ *SAFE LOCATIONS:* `4 Stars`\n"
+            f"> 🎯 *ACCURACY RATING:* `{accuracy}%`\n"
+            f"> 🔄 *NEXT ROUND:* `In {next_mins} Minutes`\n"
             ">\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"📲 [Open Official Platform]({BETTING_APP_URL}) | Next round in 6 mins"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
+            "📌 *Open app & tap matching tiles!*"
         )
 
     # 3. AVIATOR SESSION (16:00 - 22:59 GMT)
     elif 16 <= current_hour < 23:
-        multiplier = round(random.uniform(1.35, 3.50), 2)
+        multiplier = round(random.uniform(1.45, 3.80), 2)  # Customizable multiplier range
         return (
-            "🟢 *LIVE SIGNAL — AVIATOR CRASH* 🟢\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "💎 *VIP AI SIGNAL — AVIATOR* 💎\n"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             ">\n"
-            f"> 🚀 *Auto Cashout Target:* `{multiplier}x`\n"
-            "> ⏰ *Valid For:* `Next Flight`\n"
-            "> ⚠️ *Cash out strictly before target multiplier!* 💵\n"
+            f"> 🚀 *TARGET CASHOUT:* `{multiplier}x`\n"
+            "> ⏰ *ENTRY:* `Next Round Only`\n"
+            "> 🛡️ *STRATEGY:* `Strict Auto-Cashout`\n"
             ">\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"📲 [Open Official Platform]({BETTING_APP_URL}) | Cash out before target!"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
+            "📌 *Cash out strictly before target multiplier!*"
         )
 
     # 4. MAINTENANCE / OFFLINE (23:00 - 00:59 GMT)
     else:
         return (
-            "🔴 *OFFLINE SESSION ENDED* 🔴\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "🔴 *ALGORITHM OFFLINE — MAINTENANCE* 🔴\n"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             ">\n"
-            "> 🌙 *The VIP Bot algorithms are offline for maintenance.*\n"
+            "> 🌙 *The AI prediction engine is recalculating data.*\n"
             ">\n"
-            "> 🪙 *Games resume tomorrow at 1:00 AM GMT.*\n"
+            "> ⚡ *Live sessions resume tomorrow at 01:00 AM GMT.*\n"
             ">\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "😴 *Rest up and manage your risk!* 💰"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
+            "😴 *Rest up and prepare for the next trading cycle!*"
         )
 
 # ==========================================
@@ -124,13 +126,13 @@ async def auto_update_caption_win(bot: Bot, message_id: int, original_caption: s
     """Waits non-blockingly for the delay duration, then updates the photo caption to a WIN status."""
     await asyncio.sleep(delay_seconds)
     
-    # Construct the updated WIN text based on signal type
+    # Construct stylized WIN updates
     win_caption = (
         original_caption
-        .replace("🟢 *LIVE SIGNAL", "✅ *SIGNAL PASSED — WIN RESULT* ✅\n🟢 *LIVE SIGNAL")
-        .replace("⚠️ *Bet within 2 minutes! Next game in 6 mins.* 💸", "📊 *Status:* `✅ 100% WIN ACCURACY` 💸")
-        .replace("⚠️ *Accuracy: 98% (Next game in 6 mins)* 🤑", "📊 *Status:* `✅ 100% WIN ACCURACY` 🤑")
-        .replace("⚠️ *Cash out strictly before target multiplier!* 💵", "📊 *Status:* `✅ TARGET REACHED — WIN` 💵")
+        .replace("💎 *VIP AI SIGNAL", "✅ *SIGNAL PASSED — 100% WIN* ✅\n💎 *VIP AI SIGNAL")
+        .replace("📌 *Manage risk properly • Place entry now!*", "🔥 *RESULT:* `✅ WIN CONFIRMED` 💵")
+        .replace("📌 *Open app & tap matching tiles!*", "🔥 *RESULT:* `✅ ALL STARS CLEARED` 💰")
+        .replace("📌 *Cash out strictly before target multiplier!*", "🔥 *RESULT:* `✅ TARGET REACHED` 🚀")
     )
 
     try:
@@ -180,7 +182,7 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, au
             now = datetime.datetime.now(TIMEZONE)
             logger.info(f"[{now.strftime('%H:%M:%S GMT')}] Success: Photo {label} posted to {CHANNEL_ID}")
 
-            # Schedule the non-blocking background task to edit caption to WIN after delay
+            # Schedule background task to edit caption to WIN after delay
             if auto_win_delay > 0 and sent_message:
                 asyncio.create_task(
                     auto_update_caption_win(
@@ -199,7 +201,7 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, au
             logger.error(f"Unexpected error posting Photo {label}: {e}")
             break
 
-    # Fallback to plain text if photo loading repeatedly fails
+    # Fallback to plain text if photo fails
     logger.info(f"Attempting text fallback for {label}...")
     await safe_send_message(bot, caption, f"{label} (Text Fallback)")
 
@@ -212,15 +214,13 @@ async def send_1min_warning(bot: Bot):
         return
 
     text = (
-        "🟡 *ALERT PREPARE YOUR BETS!* 🟡\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "⚡ *ENTRY WARNING — 60 SECONDS* ⚡\n"
+        "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
         ">\n"
-        "> 🔔 *Get ready for the next game!*\n"
+        "> ⏳ *Next AI signal dropping in 1 MINUTE!*\n"
         ">\n"
-        "> ⏳ *Signal drops in 1 MINUTE.*\n"
-        ">\n"
-        f"> 📱 *Open your [Betting App]({BETTING_APP_URL}) and stay ready!* ⚡\n"
-        "━━━━━━━━━━━━━━━━━━━━━━"
+        "> 📲 *Get your app open and stay ready.* 🔥\n"
+        "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
     )
     await safe_send_message(bot, text, "1-Min Alert")
 
@@ -268,46 +268,46 @@ async def send_30min_reminder(bot: Bot):
     reminders = {
         0: ("🪙 COIN FLIP", COIN_FLIP_IMAGE_URL),
         7: ("🚀 MINES", MINES_IMAGE_URL),
-        15: ("✈️ AVIATOR PREDICTION", AVIATOR_IMAGE_URL)
+        15: ("✈️ AVIATOR", AVIATOR_IMAGE_URL)
     }
 
     if hour in reminders:
         next_game, image_url = reminders[hour]
         reminder_text = (
-            "🔵 *INFO 30-MINUTE GAME CHANGE* 🔵\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "📢 *SESSION ANNOUNCEMENT* 📢\n"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             ">\n"
-            f"> 📢 *Next session ({next_game}) starts in ⌛ 30 minutes!*\n"
+            f"> ⏳ *New Mode ({next_game}) starts in 30 minutes!*\n"
             ">\n"
-            "> 💰 *Deposit funds into your account now and prepare!* 🚀\n"
-            "━━━━━━━━━━━━━━━━━━━━━━"
+            "> 💰 *Top up your balance and prepare your strategy.* 🚀\n"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
         await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})", auto_win_delay=0)
 
 
 async def send_10min_transition(bot: Bot):
-    """Fires at minute 50 of hours 0, 7, 15 as the final reminder before game section changes."""
+    """Fires at minute 50 of hours 0, 7, 15 as final reminder before mode changes."""
     now = datetime.datetime.now(TIMEZONE)
     hour = now.hour
 
     transitions = {
-        0: ("✈️ AVIATOR PREDICTION", "🪙 COIN FLIP", COIN_FLIP_IMAGE_URL),
+        0: ("✈️ AVIATOR", "🪙 COIN FLIP", COIN_FLIP_IMAGE_URL),
         7: ("🪙 COIN FLIP", "🚀 MINES", MINES_IMAGE_URL),
-        15: ("🚀 MINES", "✈️ AVIATOR PREDICTION", AVIATOR_IMAGE_URL)
+        15: ("🚀 MINES", "✈️ AVIATOR", AVIATOR_IMAGE_URL)
     }
 
     if hour in transitions:
         ended_game, next_game, image_url = transitions[hour]
         transition_text = (
-            "🔵 *INFO SESSION TRANSITION* 🔵\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "🚨 *SESSION TRANSITION ALERT* 🚨\n"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             ">\n"
-            f"> 🛑 *Previous {ended_game} session has ended.*\n"
+            f"> 🛑 *The {ended_game} session is now officially closed.*\n"
             ">\n"
-            f"> ⏳ *Next session ({next_game}) begins in 10 MINUTES!*\n"
+            f"> ⏳ *Next mode ({next_game}) begins in 10 MINUTES!*\n"
             ">\n"
-            "> 🚨 *Get ready and open your apps!* 💸\n"
-            "━━━━━━━━━━━━━━━━━━━━━━"
+            "> ⚡ *Stay online for the first entry signal!* 💸\n"
+            "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
         await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0)
 
