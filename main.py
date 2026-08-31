@@ -25,7 +25,7 @@ TIMEZONE = ZoneInfo("Africa/Accra")
 # AFFILIATE & GAME LINKS
 AVIATOR_GAME_LINK = "https://refpa3665.com/L?tag=d_6027237m_73301c_telegram_bot&site=6027237&ad=73301"
 COIN_FLIP_GAME_LINK = "https://melbet-296421.top/en/casino-search?game=141276"
-MINES_GAME_LINK = "https://refpa3665.com/L?tag=d_6027237m_66335c_telegram_bot&site=6027237&ad=66335"
+MINES_GAME_LINK = "https://melbet-296421.top/en/casino-search?game=112438&demo=1"
 
 # SESSION BANNER IMAGES (Used for 30-min reminders & 10-min transitions)
 AVIATOR_IMAGE_URL = "https://carder.top/imagens/1787956019513-490226521.jpg"
