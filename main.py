@@ -22,10 +22,9 @@ TOKEN = os.environ.get("TOKEN", "8983526249:AAHRSloR9WZZoG-5PeEhPY7ZP-487q5QqCA"
 CHANNEL_ID = os.environ.get("CHANNEL_ID", "@protonxona_bot")
 TIMEZONE = ZoneInfo("Africa/Accra")
 
-# AFFILIATE & GAME LINKS
-AVIATOR_GAME_LINK = "https://refpa3665.com/L?tag=d_6027237m_73301c_telegram_bot&site=6027237&ad=73301"
-COIN_FLIP_GAME_LINK = "https://melbet-296421.top/en/casino-search?game=141276"
-MINES_GAME_LINK = "https://melbet-296421.top/en/casino-search?game=112438&demo=1"
+# 1WIN AFFILIATE LINK & PROMOCODE
+ONEWIN_AFFILIATE_LINK = "https://lkus.cc/6baca7"
+PROMO_CODE = "ProX123"
 
 # SESSION BANNER IMAGES (Used for 30-min reminders & 10-min transitions)
 AVIATOR_IMAGE_URL = "https://carder.top/imagens/1787956019513-490226521.jpg"
@@ -60,9 +59,9 @@ def build_message_payload(current_hour: int) -> str:
     if 1 <= current_hour <= 7:
         outcome = random.choice(["🪙 HEADS 🟡", "🪙 TAILS 🟢"])
         confidence = random.randint(92, 99)
-        next_mins = random.randint(4, 7)  # Randomized next signal text
+        next_mins = random.randint(4, 7)
         return (
-            "💎 *VIP AI SIGNAL — COIN FLIP* 💎\n"
+            "💎 *VIP AI SIGNAL — COIN FLIP (1WIN)* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             "\n"
             f" 🎯 *PREDICTED SIDE:* `{outcome}`\n"
@@ -70,18 +69,19 @@ def build_message_payload(current_hour: int) -> str:
             "\n"
             " ⏰ *STATUS:* `Active Entry`\n"
             f" 🔄 *NEXT SIGNAL:* `In {next_mins} Minutes`\n"
+            f" 🎁 *BONUS CODE:* `{PROMO_CODE}`\n"
             "\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
-            "📌 *Manage risk properly • Place entry now!*"
+            "📌 *Use Promo Code during sign up • Place entry now!*"
         )
 
     # 2. MINES SESSION (08:00 - 15:59 GMT)
     elif 8 <= current_hour <= 15:
         grid = build_mines_grid()
-        accuracy = round(random.uniform(96.0, 99.4), 1)  # Dynamic accuracy rating
+        accuracy = round(random.uniform(96.0, 99.4), 1)
         next_mins = random.randint(3, 8)
         return (
-            "💎 *VIP AI SIGNAL — MINES* 💎\n"
+            "💎 *VIP AI SIGNAL — MINES (1WIN)* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             "\n"
             f"{grid}\n"
@@ -90,21 +90,23 @@ def build_message_payload(current_hour: int) -> str:
             " ⭐ *SAFE LOCATIONS:* `4 Stars`\n"
             f" 🎯 *ACCURACY RATING:* `{accuracy}%`\n"
             f" 🔄 *NEXT ROUND:* `In {next_mins} Minutes`\n"
+            f" 🎁 *BONUS CODE:* `{PROMO_CODE}`\n"
             "\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
-            "📌 *Open app & tap matching tiles!*"
+            "📌 *Open app, use code & tap matching tiles!*"
         )
 
     # 3. AVIATOR SESSION (16:00 - 22:59 GMT)
     elif 16 <= current_hour <= 22:
-        multiplier = round(random.uniform(1.25, 2.00), 2)  # Customizable multiplier range
+        multiplier = round(random.uniform(1.25, 2.00), 2)
         return (
-            "💎 *VIP AI SIGNAL — AVIATOR* 💎\n"
+            "💎 *VIP AI SIGNAL — AVIATOR (1WIN)* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             "\n"
             f" 🚀 *TARGET CASHOUT:* `{multiplier}x`\n"
             " ⏰ *ENTRY:* `Next Round Only`\n"
             " 🛡️ *STRATEGY:* `Strict Auto-Cashout`\n"
+            f" 🎁 *BONUS CODE:* `{PROMO_CODE}`\n"
             "\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             "📌 *Cash out strictly before target multiplier!*"
@@ -131,12 +133,11 @@ async def auto_update_caption_win(bot: Bot, message_id: int, original_caption: s
     """Waits non-blockingly for the delay duration, then updates the photo caption to a WIN status."""
     await asyncio.sleep(delay_seconds)
     
-    # Construct stylized WIN updates
     win_caption = (
         original_caption
         .replace("💎 *VIP AI SIGNAL", "✅ *SIGNAL PASSED — 100% WIN* ✅\n💎 *VIP AI SIGNAL")
-        .replace("📌 *Manage risk properly • Place entry now!*", "🔥 *RESULT:* `✅ WIN CONFIRMED` 💵")
-        .replace("📌 *Open app & tap matching tiles!*", "🔥 *RESULT:* `✅ ALL STARS CLEARED` 💰")
+        .replace("📌 *Use Promo Code during sign up • Place entry now!*", "🔥 *RESULT:* `✅ WIN CONFIRMED` 💵")
+        .replace("📌 *Open app, use code & tap matching tiles!*", "🔥 *RESULT:* `✅ ALL STARS CLEARED` 💰")
         .replace("📌 *Cash out strictly before target multiplier!*", "🔥 *RESULT:* `✅ TARGET REACHED` 🚀")
     )
 
@@ -190,7 +191,6 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, au
             now = datetime.datetime.now(TIMEZONE)
             logger.info(f"[{now.strftime('%H:%M:%S GMT')}] Success: Photo {label} posted to {CHANNEL_ID}")
 
-            # Schedule background task to edit caption to WIN after delay
             if auto_win_delay > 0 and sent_message:
                 asyncio.create_task(
                     auto_update_caption_win(
@@ -210,7 +210,6 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, au
             logger.error(f"Unexpected error posting Photo {label}: {e}")
             break
 
-    # Fallback to plain text if photo fails
     logger.info(f"Attempting text fallback for {label}...")
     await safe_send_message(bot, caption, f"{label} (Text Fallback)", reply_markup=reply_markup)
 
@@ -226,9 +225,9 @@ async def send_1min_warning(bot: Bot):
         "⚡ *ENTRY WARNING — 60 SECONDS* ⚡\n"
         "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
         ">\n"
-        "> ⏳ *Next AI signal dropping in 1 MINUTE!*\n"
+        "> ⏳ *Next 1WIN AI signal dropping in 1 MINUTE!*\n"
         ">\n"
-        "> 📲 *Get your app open and stay ready.* 🔥\n"
+        f"> 📲 *Use Code: `{PROMO_CODE}` & stay ready.* 🔥\n"
         "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
     )
     await safe_send_message(bot, text, "1-Min Alert")
@@ -238,44 +237,40 @@ async def send_hourly_predictions(bot: Bot):
     now = datetime.datetime.now(TIMEZONE)
     payload = build_message_payload(now.hour)
     
+    # Inline keyboard pointing to your 1win link with promo code details
+    onewin_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton(f"🚀 Play 1Win Here (Code: {PROMO_CODE})", url=ONEWIN_AFFILIATE_LINK)]
+    ])
+
     # 1. Coin Flip Session (01:00 - 07:59 GMT)
     if 1 <= now.hour <= 7:
-        coin_flip_keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🪙 Play Melbet Coin Flip Here", url=COIN_FLIP_GAME_LINK)]
-        ])
         await safe_send_photo(
             bot=bot,
             photo_url=COIN_FLIP_SIGNAL_IMAGE_URL,
             caption=payload,
             label=f"Coin Flip Signal (Hour {now.hour})",
             auto_win_delay=180,
-            reply_markup=coin_flip_keyboard
+            reply_markup=onewin_keyboard
         )
     # 2. Mines Session (08:00 - 15:59 GMT)
     elif 8 <= now.hour <= 15:
-        mines_keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("💣 Play Melbet Mines Here", url=MINES_GAME_LINK)]
-        ])
         await safe_send_photo(
             bot=bot,
             photo_url=MINES_SIGNAL_IMAGE_URL,
             caption=payload,
             label=f"Mines Signal (Hour {now.hour})",
             auto_win_delay=180,
-            reply_markup=mines_keyboard
+            reply_markup=onewin_keyboard
         )
     # 3. Aviator Session (16:00 - 22:59 GMT)
     elif 16 <= now.hour <= 22:
-        aviator_keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🎮 Play Melbet Aviator Here", url=AVIATOR_GAME_LINK)]
-        ])
         await safe_send_photo(
             bot=bot,
             photo_url=AVIATOR_SIGNAL_IMAGE_URL,
             caption=payload,
             label=f"Aviator Signal (Hour {now.hour})",
             auto_win_delay=180,
-            reply_markup=aviator_keyboard
+            reply_markup=onewin_keyboard
         )
     # 4. Offline Maintenance Session
     else:
@@ -295,28 +290,18 @@ async def send_30min_reminder(bot: Bot):
     if hour in reminders:
         next_game, image_url = reminders[hour]
         reminder_text = (
-            "📢 *SESSION ANNOUNCEMENT* 📢\n"
+            "📢 *1WIN SESSION ANNOUNCEMENT* 📢\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             ">\n"
             f"> ⏳ *New Mode ({next_game}) starts in 30 minutes!*\n"
             ">\n"
-            "> 💰 *Top up your balance and prepare your strategy.* 🚀\n"
+            f"> 💰 *Use Promo Code `{PROMO_CODE}` for your deposit bonus!* 🚀\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
         
-        reply_markup = None
-        if hour == 0:  # Add button if announcing Coin Flip
-            reply_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🪙 Play Melbet Coin Flip Here", url=COIN_FLIP_GAME_LINK)]
-            ])
-        elif hour == 7:  # Add button if announcing Mines
-            reply_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("💣 Play Melbet Mines Here", url=MINES_GAME_LINK)]
-            ])
-        elif hour == 15:  # Add button if announcing Aviator
-            reply_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🎮 Play Melbet Aviator Here", url=AVIATOR_GAME_LINK)]
-            ])
+        reply_markup = InlineKeyboardMarkup([
+            [InlineKeyboardButton(f"🎁 Register 1Win (Code: {PROMO_CODE})", url=ONEWIN_AFFILIATE_LINK)]
+        ])
             
         await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})", auto_win_delay=0, reply_markup=reply_markup)
 
@@ -342,23 +327,13 @@ async def send_10min_transition(bot: Bot):
             ">\n"
             f"> ⏳ *Next mode ({next_game}) begins in 10 MINUTES!*\n"
             ">\n"
-            "> ⚡ *Stay online for the first entry signal!* 💸\n"
+            f"> ⚡ *Use Code `{PROMO_CODE}` on 1Win to claim bonus!* 💸\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
         
-        reply_markup = None
-        if hour == 0:  # Add button if transitioning into Coin Flip
-            reply_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🪙 Play Melbet Coin Flip Here", url=COIN_FLIP_GAME_LINK)]
-            ])
-        elif hour == 7:  # Add button if transitioning into Mines
-            reply_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("💣 Play Melbet Mines Here", url=MINES_GAME_LINK)]
-            ])
-        elif hour == 15:  # Add button if transitioning into Aviator
-            reply_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🎮 Play Melbet Aviator Here", url=AVIATOR_GAME_LINK)]
-            ])
+        reply_markup = InlineKeyboardMarkup([
+            [InlineKeyboardButton(f"💥 Play 1Win Now (Code: {PROMO_CODE})", url=ONEWIN_AFFILIATE_LINK)]
+        ])
             
         await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0, reply_markup=reply_markup)
 
