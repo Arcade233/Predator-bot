@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 from aiohttp import web
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from telegram import Bot
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import TelegramError
 from telegram.ext import Application
 
@@ -21,6 +21,9 @@ logger = logging.getLogger("VIPPredictorBot")
 TOKEN = os.environ.get("TOKEN", "8983526249:AAHRSloR9WZZoG-5PeEhPY7ZP-487q5QqCA")
 CHANNEL_ID = os.environ.get("CHANNEL_ID", "@protonxona_bot")
 TIMEZONE = ZoneInfo("Africa/Accra")
+
+# AFFILIATE & GAME LINKS
+AVIATOR_GAME_LINK = "https://refpa3665.com/L?tag=d_6027237m_73301c_telegram_bot&site=6027237&ad=73301"
 
 # SESSION BANNER IMAGES (Used for 30-min reminders & 10-min transitions)
 AVIATOR_IMAGE_URL = "https://carder.top/imagens/1787956019513-490226521.jpg"
@@ -52,7 +55,7 @@ def build_message_payload(current_hour: int) -> str:
     """Constructs stylized Markdown templates with randomized timers & parameters."""
     
     # 1. COIN FLIP SESSION (01:00 - 07:59 GMT)
-    if 1 <= current_hour < 8:
+    if 1 <= current_hour <= 7:
         outcome = random.choice(["🪙 HEADS 🟡", "🪙 TAILS 🟢"])
         confidence = random.randint(92, 99)
         next_mins = random.randint(4, 7)  # Randomized next signal text
@@ -71,7 +74,7 @@ def build_message_payload(current_hour: int) -> str:
         )
 
     # 2. MINES SESSION (08:00 - 15:59 GMT)
-    elif 8 <= current_hour < 16:
+    elif 8 <= current_hour <= 15:
         grid = build_mines_grid()
         accuracy = round(random.uniform(96.0, 99.4), 1)  # Dynamic accuracy rating
         next_mins = random.randint(3, 8)
@@ -91,7 +94,7 @@ def build_message_payload(current_hour: int) -> str:
         )
 
     # 3. AVIATOR SESSION (16:00 - 22:59 GMT)
-    elif 16 <= current_hour < 23:
+    elif 16 <= current_hour <= 22:
         multiplier = round(random.uniform(1.25, 2.00), 2)  # Customizable multiplier range
         return (
             "💎 *VIP AI SIGNAL — AVIATOR* 💎\n"
@@ -122,7 +125,7 @@ def build_message_payload(current_hour: int) -> str:
 # ==========================================
 # ASYNC BOT DISPATCHERS & EDITORS
 # ==========================================
-async def auto_update_caption_win(bot: Bot, message_id: int, original_caption: str, delay_seconds: int = 180):
+async def auto_update_caption_win(bot: Bot, message_id: int, original_caption: str, delay_seconds: int = 180, reply_markup=None):
     """Waits non-blockingly for the delay duration, then updates the photo caption to a WIN status."""
     await asyncio.sleep(delay_seconds)
     
@@ -140,7 +143,8 @@ async def auto_update_caption_win(bot: Bot, message_id: int, original_caption: s
             chat_id=CHANNEL_ID,
             message_id=message_id,
             caption=win_caption,
-            parse_mode="Markdown"
+            parse_mode="Markdown",
+            reply_markup=reply_markup
         )
         now = datetime.datetime.now(TIMEZONE)
         logger.info(f"[{now.strftime('%H:%M:%S GMT')}] Success: Message ID {message_id} updated to WIN.")
@@ -148,7 +152,7 @@ async def auto_update_caption_win(bot: Bot, message_id: int, original_caption: s
         logger.warning(f"Could not edit caption for message {message_id}: {e}")
 
 
-async def safe_send_message(bot: Bot, text: str, label: str):
+async def safe_send_message(bot: Bot, text: str, label: str, reply_markup=None):
     """Dispatches Telegram text messages with exponential retry logic."""
     for attempt in range(1, 4):
         try:
@@ -156,7 +160,8 @@ async def safe_send_message(bot: Bot, text: str, label: str):
                 chat_id=CHANNEL_ID,
                 text=text,
                 parse_mode="Markdown",
-                disable_web_page_preview=True
+                disable_web_page_preview=True,
+                reply_markup=reply_markup
             )
             now = datetime.datetime.now(TIMEZONE)
             logger.info(f"[{now.strftime('%H:%M:%S GMT')}] Success: {label} posted to {CHANNEL_ID}")
@@ -169,7 +174,7 @@ async def safe_send_message(bot: Bot, text: str, label: str):
             break
 
 
-async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, auto_win_delay: int = 180):
+async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, auto_win_delay: int = 180, reply_markup=None):
     """Dispatches Telegram photo messages and schedules a background task to auto-edit the caption to WIN."""
     for attempt in range(1, 4):
         try:
@@ -177,7 +182,8 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, au
                 chat_id=CHANNEL_ID,
                 photo=photo_url,
                 caption=caption,
-                parse_mode="Markdown"
+                parse_mode="Markdown",
+                reply_markup=reply_markup
             )
             now = datetime.datetime.now(TIMEZONE)
             logger.info(f"[{now.strftime('%H:%M:%S GMT')}] Success: Photo {label} posted to {CHANNEL_ID}")
@@ -189,7 +195,8 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, au
                         bot=bot,
                         message_id=sent_message.message_id,
                         original_caption=caption,
-                        delay_seconds=auto_win_delay
+                        delay_seconds=auto_win_delay,
+                        reply_markup=reply_markup
                     )
                 )
 
@@ -203,7 +210,7 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, au
 
     # Fallback to plain text if photo fails
     logger.info(f"Attempting text fallback for {label}...")
-    await safe_send_message(bot, caption, f"{label} (Text Fallback)")
+    await safe_send_message(bot, caption, f"{label} (Text Fallback)", reply_markup=reply_markup)
 
 # ==========================================
 # SCHEDULED EVENTS
@@ -230,7 +237,7 @@ async def send_hourly_predictions(bot: Bot):
     payload = build_message_payload(now.hour)
     
     # 1. Coin Flip Session (01:00 - 07:59 GMT)
-    if 1 <= now.hour < 8:
+    if 1 <= now.hour <= 7:
         await safe_send_photo(
             bot=bot,
             photo_url=COIN_FLIP_SIGNAL_IMAGE_URL,
@@ -239,7 +246,7 @@ async def send_hourly_predictions(bot: Bot):
             auto_win_delay=180
         )
     # 2. Mines Session (08:00 - 15:59 GMT)
-    elif 8 <= now.hour < 16:
+    elif 8 <= now.hour <= 15:
         await safe_send_photo(
             bot=bot,
             photo_url=MINES_SIGNAL_IMAGE_URL,
@@ -248,13 +255,19 @@ async def send_hourly_predictions(bot: Bot):
             auto_win_delay=180
         )
     # 3. Aviator Session (16:00 - 22:59 GMT)
-    elif 16 <= now.hour < 23:
+    elif 16 <= now.hour <= 22:
+        # Create inline button for Aviator Game Link
+        aviator_keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🎮 Play Melbet Aviator Here", url=AVIATOR_GAME_LINK)]
+        ])
+        
         await safe_send_photo(
             bot=bot,
             photo_url=AVIATOR_SIGNAL_IMAGE_URL,
             caption=payload,
             label=f"Aviator Signal (Hour {now.hour})",
-            auto_win_delay=180
+            auto_win_delay=180,
+            reply_markup=aviator_keyboard
         )
     # 4. Offline Maintenance Session
     else:
@@ -282,7 +295,14 @@ async def send_30min_reminder(bot: Bot):
             "> 💰 *Top up your balance and prepare your strategy.* 🚀\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
-        await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})", auto_win_delay=0)
+        
+        reply_markup = None
+        if hour == 15:  # Add button if announcing Aviator
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("🎮 Play Melbet Aviator Here", url=AVIATOR_GAME_LINK)]
+            ])
+            
+        await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})", auto_win_delay=0, reply_markup=reply_markup)
 
 
 async def send_10min_transition(bot: Bot):
@@ -309,7 +329,14 @@ async def send_10min_transition(bot: Bot):
             "> ⚡ *Stay online for the first entry signal!* 💸\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
-        await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0)
+        
+        reply_markup = None
+        if hour == 15:  # Add button if transitioning into Aviator
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("🎮 Play Melbet Aviator Here", url=AVIATOR_GAME_LINK)]
+            ])
+            
+        await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0, reply_markup=reply_markup)
 
 # ==========================================
 # WEB HEALTH CHECK HANDLER
