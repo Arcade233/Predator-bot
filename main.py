@@ -24,6 +24,8 @@ TIMEZONE = ZoneInfo("Africa/Accra")
 
 # AFFILIATE & GAME LINKS
 AVIATOR_GAME_LINK = "https://refpa3665.com/L?tag=d_6027237m_73301c_telegram_bot&site=6027237&ad=73301"
+COIN_FLIP_GAME_LINK = "https://melbet-296421.top/en/casino-search?game=141276"
+MINES_GAME_LINK = "https://refpa3665.com/L?tag=d_6027237m_66335c_telegram_bot&site=6027237&ad=66335"
 
 # SESSION BANNER IMAGES (Used for 30-min reminders & 10-min transitions)
 AVIATOR_IMAGE_URL = "https://carder.top/imagens/1787956019513-490226521.jpg"
@@ -238,29 +240,35 @@ async def send_hourly_predictions(bot: Bot):
     
     # 1. Coin Flip Session (01:00 - 07:59 GMT)
     if 1 <= now.hour <= 7:
+        coin_flip_keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🪙 Play Melbet Coin Flip Here", url=COIN_FLIP_GAME_LINK)]
+        ])
         await safe_send_photo(
             bot=bot,
             photo_url=COIN_FLIP_SIGNAL_IMAGE_URL,
             caption=payload,
             label=f"Coin Flip Signal (Hour {now.hour})",
-            auto_win_delay=180
+            auto_win_delay=180,
+            reply_markup=coin_flip_keyboard
         )
     # 2. Mines Session (08:00 - 15:59 GMT)
     elif 8 <= now.hour <= 15:
+        mines_keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("💣 Play Melbet Mines Here", url=MINES_GAME_LINK)]
+        ])
         await safe_send_photo(
             bot=bot,
             photo_url=MINES_SIGNAL_IMAGE_URL,
             caption=payload,
             label=f"Mines Signal (Hour {now.hour})",
-            auto_win_delay=180
+            auto_win_delay=180,
+            reply_markup=mines_keyboard
         )
     # 3. Aviator Session (16:00 - 22:59 GMT)
     elif 16 <= now.hour <= 22:
-        # Create inline button for Aviator Game Link
         aviator_keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("🎮 Play Melbet Aviator Here", url=AVIATOR_GAME_LINK)]
         ])
-        
         await safe_send_photo(
             bot=bot,
             photo_url=AVIATOR_SIGNAL_IMAGE_URL,
@@ -297,7 +305,15 @@ async def send_30min_reminder(bot: Bot):
         )
         
         reply_markup = None
-        if hour == 15:  # Add button if announcing Aviator
+        if hour == 0:  # Add button if announcing Coin Flip
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("🪙 Play Melbet Coin Flip Here", url=COIN_FLIP_GAME_LINK)]
+            ])
+        elif hour == 7:  # Add button if announcing Mines
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("💣 Play Melbet Mines Here", url=MINES_GAME_LINK)]
+            ])
+        elif hour == 15:  # Add button if announcing Aviator
             reply_markup = InlineKeyboardMarkup([
                 [InlineKeyboardButton("🎮 Play Melbet Aviator Here", url=AVIATOR_GAME_LINK)]
             ])
@@ -331,7 +347,15 @@ async def send_10min_transition(bot: Bot):
         )
         
         reply_markup = None
-        if hour == 15:  # Add button if transitioning into Aviator
+        if hour == 0:  # Add button if transitioning into Coin Flip
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("🪙 Play Melbet Coin Flip Here", url=COIN_FLIP_GAME_LINK)]
+            ])
+        elif hour == 7:  # Add button if transitioning into Mines
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("💣 Play Melbet Mines Here", url=MINES_GAME_LINK)]
+            ])
+        elif hour == 15:  # Add button if transitioning into Aviator
             reply_markup = InlineKeyboardMarkup([
                 [InlineKeyboardButton("🎮 Play Melbet Aviator Here", url=AVIATOR_GAME_LINK)]
             ])
