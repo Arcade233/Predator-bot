@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 logger = logging.getLogger("VIPPredictorBot")
 
 TOKEN = os.environ.get("TOKEN", "8983526249:AAHRSloR9WZZoG-5PeEhPY7ZP-487q5QqCA")
-CHANNEL_ID = os.environ.get("CHANNEL_ID", "@protonxona_bot")
+CHANNEL_ID = os.environ.get("CHANNEL_ID", "-1003950743083")
 TIMEZONE = ZoneInfo("Africa/Accra")
 
 # 1WIN AFFILIATE LINK & PROMOCODE
