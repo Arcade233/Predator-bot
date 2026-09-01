@@ -22,8 +22,8 @@ TOKEN = os.environ.get("TOKEN", "8983526249:AAHRSloR9WZZoG-5PeEhPY7ZP-487q5QqCA"
 CHANNEL_ID = os.environ.get("CHANNEL_ID", "-1003950743083")
 TIMEZONE = ZoneInfo("Africa/Accra")
 
-# 1WIN AFFILIATE LINK & PROMOCODE
-ONEWIN_AFFILIATE_LINK = "https://lkus.cc/6baca7"
+# 1WIN DIRECT CASINO/GAME AFFILIATE LINK & PROMOCODE
+ONEWIN_CASINO_LINK = "https://lkgp.pro/f87731"
 PROMO_CODE = "ProX123"
 
 # SESSION BANNER IMAGES (Used for 30-min reminders & 10-min transitions)
@@ -35,6 +35,16 @@ COIN_FLIP_IMAGE_URL = "https://carder.top/imagens/1787956065622-306701028.jpg"
 COIN_FLIP_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787987001471-864263496.jpg"
 MINES_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787988758434-575219937.jpg"
 AVIATOR_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787989274632-715169951.jpg"
+
+# ==========================================
+# KEYBOARD BUILDERS
+# ==========================================
+def get_game_keyboard(game_name: str) -> InlineKeyboardMarkup:
+    """Generates an inline keyboard button matching the specific active game session."""
+    button_text = f"🚀 Search and Play {game_name} Here (Code: {PROMO_CODE})"
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(button_text, url=ONEWIN_CASINO_LINK)]
+    ])
 
 # ==========================================
 # SIGNAL BUILDERS & FORMATTERS
@@ -236,11 +246,6 @@ async def send_1min_warning(bot: Bot):
 async def send_hourly_predictions(bot: Bot):
     now = datetime.datetime.now(TIMEZONE)
     payload = build_message_payload(now.hour)
-    
-    # Inline keyboard pointing to your 1win link with promo code details
-    onewin_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(f"🚀 Play 1Win Here (Code: {PROMO_CODE})", url=ONEWIN_AFFILIATE_LINK)]
-    ])
 
     # 1. Coin Flip Session (01:00 - 07:59 GMT)
     if 1 <= now.hour <= 7:
@@ -250,7 +255,7 @@ async def send_hourly_predictions(bot: Bot):
             caption=payload,
             label=f"Coin Flip Signal (Hour {now.hour})",
             auto_win_delay=180,
-            reply_markup=onewin_keyboard
+            reply_markup=get_game_keyboard("Coin Flip")
         )
     # 2. Mines Session (08:00 - 15:59 GMT)
     elif 8 <= now.hour <= 15:
@@ -260,7 +265,7 @@ async def send_hourly_predictions(bot: Bot):
             caption=payload,
             label=f"Mines Signal (Hour {now.hour})",
             auto_win_delay=180,
-            reply_markup=onewin_keyboard
+            reply_markup=get_game_keyboard("Mines")
         )
     # 3. Aviator Session (16:00 - 22:59 GMT)
     elif 16 <= now.hour <= 22:
@@ -270,7 +275,7 @@ async def send_hourly_predictions(bot: Bot):
             caption=payload,
             label=f"Aviator Signal (Hour {now.hour})",
             auto_win_delay=180,
-            reply_markup=onewin_keyboard
+            reply_markup=get_game_keyboard("Aviator")
         )
     # 4. Offline Maintenance Session
     else:
@@ -282,9 +287,9 @@ async def send_30min_reminder(bot: Bot):
     hour = now.hour
 
     reminders = {
-        0: ("🪙 COIN FLIP", COIN_FLIP_IMAGE_URL),
-        7: ("🚀 MINES", MINES_IMAGE_URL),
-        15: ("✈️ AVIATOR", AVIATOR_IMAGE_URL)
+        0: ("🪙 Coin Flip", COIN_FLIP_IMAGE_URL),
+        7: ("🚀 Mines", MINES_IMAGE_URL),
+        15: ("✈️ Aviator", AVIATOR_IMAGE_URL)
     }
 
     if hour in reminders:
@@ -299,11 +304,10 @@ async def send_30min_reminder(bot: Bot):
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
         
-        reply_markup = InlineKeyboardMarkup([
-            [InlineKeyboardButton(f"🎁 Register 1Win (Code: {PROMO_CODE})", url=ONEWIN_AFFILIATE_LINK)]
-        ])
+        # Clean game name for button formatting
+        clean_name = next_game.replace("🪙 ", "").replace("🚀 ", "").replace("✈️ ", "")
             
-        await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})", auto_win_delay=0, reply_markup=reply_markup)
+        await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})", auto_win_delay=0, reply_markup=get_game_keyboard(clean_name))
 
 
 async def send_10min_transition(bot: Bot):
@@ -312,9 +316,9 @@ async def send_10min_transition(bot: Bot):
     hour = now.hour
 
     transitions = {
-        0: ("✈️ AVIATOR", "🪙 COIN FLIP", COIN_FLIP_IMAGE_URL),
-        7: ("🪙 COIN FLIP", "🚀 MINES", MINES_IMAGE_URL),
-        15: ("🚀 MINES", "✈️ AVIATOR", AVIATOR_IMAGE_URL)
+        0: ("✈️ Aviator", "🪙 Coin Flip", COIN_FLIP_IMAGE_URL),
+        7: ("🪙 Coin Flip", "🚀 Mines", MINES_IMAGE_URL),
+        15: ("🚀 Mines", "✈️ Aviator", AVIATOR_IMAGE_URL)
     }
 
     if hour in transitions:
@@ -331,11 +335,10 @@ async def send_10min_transition(bot: Bot):
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
         
-        reply_markup = InlineKeyboardMarkup([
-            [InlineKeyboardButton(f"💥 Play 1Win Now (Code: {PROMO_CODE})", url=ONEWIN_AFFILIATE_LINK)]
-        ])
+        # Clean game name for button formatting
+        clean_name = next_game.replace("🪙 ", "").replace("🚀 ", "").replace("✈️ ", "")
             
-        await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0, reply_markup=reply_markup)
+        await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0, reply_markup=get_game_keyboard(clean_name))
 
 # ==========================================
 # WEB HEALTH CHECK HANDLER
