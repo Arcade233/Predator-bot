@@ -3,9 +3,11 @@ import datetime
 import logging
 import os
 import random
+import re
 from zoneinfo import ZoneInfo
 
 from aiohttp import web
+import socketio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import TelegramError
@@ -36,6 +38,12 @@ COIN_FLIP_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787987001471-864263496
 MINES_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787988758434-575219937.jpg"
 AVIATOR_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787989274632-715169951.jpg"
 
+# SOCKET.IO REALTIME SERVER INITIALIZATION
+sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins='*')
+
+# Global variable to store live signal payload for webpage connection
+latest_signal_payload = {}
+
 # ==========================================
 # KEYBOARD BUILDERS
 # ==========================================
@@ -49,7 +57,7 @@ def get_game_keyboard(game_name: str) -> InlineKeyboardMarkup:
 # ==========================================
 # SIGNAL BUILDERS & FORMATTERS
 # ==========================================
-def build_mines_grid() -> str:
+def build_mines_grid():
     """Generates a clean 5x5 grid with 4 safe star locations."""
     grid_size = 25
     safe_tiles = set(random.sample(range(1, grid_size + 1), 4))
@@ -59,17 +67,25 @@ def build_mines_grid() -> str:
         row_str = "".join("⭐ " if (r * 5 + c + 1) in safe_tiles else "🟦 " for c in range(5))
         rows.append(f"> {row_str.strip()}")
     
-    return "\n".join(rows)
+    return "\n".join(rows), list(safe_tiles)
 
 
 def build_message_payload(current_hour: int) -> str:
     """Constructs stylized Markdown templates with randomized timers & parameters."""
+    global latest_signal_payload
     
     # 1. COIN FLIP SESSION (01:00 - 07:59 GMT)
     if 1 <= current_hour <= 7:
         outcome = random.choice(["🪙 HEADS 🟡", "🪙 TAILS 🟢"])
         confidence = random.randint(92, 99)
         next_mins = random.randint(4, 7)
+        
+        latest_signal_payload = {
+            "game": "coinflip",
+            "outcome": outcome,
+            "confidence": confidence
+        }
+        
         return (
             "💎 *VIP AI SIGNAL — COIN FLIP (1WIN)* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
@@ -87,14 +103,21 @@ def build_message_payload(current_hour: int) -> str:
 
     # 2. MINES SESSION (08:00 - 15:59 GMT)
     elif 8 <= current_hour <= 15:
-        grid = build_mines_grid()
+        grid_text, safe_tiles = build_mines_grid()
         accuracy = round(random.uniform(96.0, 99.4), 1)
         next_mins = random.randint(3, 8)
+        
+        latest_signal_payload = {
+            "game": "mines",
+            "safe_tiles": safe_tiles,
+            "accuracy": accuracy
+        }
+        
         return (
             "💎 *VIP AI SIGNAL — MINES (1WIN)* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             "\n"
-            f"{grid}\n"
+            f"{grid_text}\n"
             "\n"
             " 💣 *TRAPS:* `3 Mines`\n"
             " ⭐ *SAFE LOCATIONS:* `4 Stars`\n"
@@ -109,6 +132,12 @@ def build_message_payload(current_hour: int) -> str:
     # 3. AVIATOR SESSION (16:00 - 22:59 GMT)
     elif 16 <= current_hour <= 22:
         multiplier = round(random.uniform(1.25, 2.00), 2)
+        
+        latest_signal_payload = {
+            "game": "aviator",
+            "target": multiplier
+        }
+        
         return (
             "💎 *VIP AI SIGNAL — AVIATOR (1WIN)* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
@@ -124,6 +153,7 @@ def build_message_payload(current_hour: int) -> str:
 
     # 4. MAINTENANCE / OFFLINE (23:00 - 00:59 GMT)
     else:
+        latest_signal_payload = {"game": "offline"}
         return (
             "🔴 *ALGORITHM OFFLINE — MAINTENANCE* 🔴\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
@@ -224,7 +254,7 @@ async def safe_send_photo(bot: Bot, photo_url: str, caption: str, label: str, au
     await safe_send_message(bot, caption, f"{label} (Text Fallback)", reply_markup=reply_markup)
 
 # ==========================================
-# SCHEDULED EVENTS
+# SCHEDULED EVENTS & BROADCASTS
 # ==========================================
 async def send_1min_warning(bot: Bot):
     now = datetime.datetime.now(TIMEZONE)
@@ -281,6 +311,11 @@ async def send_hourly_predictions(bot: Bot):
     else:
         await safe_send_message(bot, payload, f"Main Signal (Hour {now.hour})")
 
+    # Broadcast to website real-time via Socket.IO
+    if latest_signal_payload:
+        logger.info(f"Broadcasting live signal payload: {latest_signal_payload}")
+        await sio.emit("telegram_signal", latest_signal_payload)
+
 
 async def send_30min_reminder(bot: Bot):
     now = datetime.datetime.now(TIMEZONE)
@@ -304,9 +339,7 @@ async def send_30min_reminder(bot: Bot):
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
         
-        # Clean game name for button formatting
         clean_name = next_game.replace("🪙 ", "").replace("🚀 ", "").replace("✈️ ", "")
-            
         await safe_send_photo(bot, image_url, reminder_text, f"30-Min Reminder ({next_game})", auto_win_delay=0, reply_markup=get_game_keyboard(clean_name))
 
 
@@ -335,9 +368,7 @@ async def send_10min_transition(bot: Bot):
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
         )
         
-        # Clean game name for button formatting
         clean_name = next_game.replace("🪙 ", "").replace("🚀 ", "").replace("✈️ ", "")
-            
         await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0, reply_markup=get_game_keyboard(clean_name))
 
 # ==========================================
@@ -345,13 +376,13 @@ async def send_10min_transition(bot: Bot):
 # ==========================================
 async def handle_ping(request):
     logger.info("Keep-alive ping received.")
-    return web.Response(text="Bot is running!", status=200)
+    return web.Response(text="Bot & Socket server are running!", status=200)
 
 # ==========================================
 # MAIN EXECUTION
 # ==========================================
 async def main():
-    logger.info("Initializing VIP Predictor Engine...")
+    logger.info("Initializing VIP Predictor Engine + Realtime Web Socket Server...")
     
     app = Application.builder().token(TOKEN).build()
     scheduler = AsyncIOScheduler(timezone=TIMEZONE)
@@ -393,16 +424,18 @@ async def main():
     scheduler.start()
     logger.info("Channel Predictor Bot scheduler initialized continuously...")
 
-    # Start AIOHTTP Web Server for Cloud Keep-Alive (Render / Railway)
+    # Start AIOHTTP Web Server for Cloud Keep-Alive & Socket.IO
     web_app = web.Application()
+    sio.attach(web_app)
     web_app.router.add_get("/", handle_ping)
+    
     runner = web.AppRunner(web_app)
     await runner.setup()
 
     port = int(os.environ.get("PORT", 10000))
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
-    logger.info(f"HTTP dummy server running on port {port}")
+    logger.info(f"HTTP & Socket server running on port {port}")
 
     async with app:
         await app.start()
