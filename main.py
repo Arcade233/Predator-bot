@@ -28,12 +28,12 @@ TIMEZONE = ZoneInfo("Africa/Accra")
 ONEWIN_CASINO_LINK = "https://lkgp.pro/f87731"
 PROMO_CODE = "ProX123"
 
-# SESSION BANNER IMAGES (Used for 30-min reminders & 10-min transitions)
+# SESSION BANNER IMAGES
 AVIATOR_IMAGE_URL = "https://carder.top/imagens/1787956019513-490226521.jpg"
 MINES_IMAGE_URL = "https://carder.top/imagens/1787956064400-230189890.jpg"
 COIN_FLIP_IMAGE_URL = "https://carder.top/imagens/1787956065622-306701028.jpg"
 
-# SIGNAL IMAGES (Dedicated for each active game mode)
+# SIGNAL IMAGES
 COIN_FLIP_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787987001471-864263496.jpg"
 MINES_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787988758434-575219937.jpg"
 AVIATOR_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787989274632-715169951.jpg"
@@ -41,8 +41,10 @@ AVIATOR_SIGNAL_IMAGE_URL = "https://carder.top/imagens/1787989274632-715169951.j
 # SOCKET.IO REALTIME SERVER INITIALIZATION
 sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins='*')
 
-# Global variable to store live signal payload for webpage connection
+# Global state for Realtime Syncing
 latest_signal_payload = {}
+CURRENT_ROUND_ID = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+LATEST_AVIATOR_MULTIPLIER = 1.50
 
 # ==========================================
 # KEYBOARD BUILDERS
@@ -72,8 +74,10 @@ def build_mines_grid():
 
 def build_message_payload(current_hour: int) -> str:
     """Constructs stylized Markdown templates with randomized timers & parameters."""
-    global latest_signal_payload
+    global latest_signal_payload, CURRENT_ROUND_ID, LATEST_AVIATOR_MULTIPLIER
     
+    CURRENT_ROUND_ID = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+
     # 1. COIN FLIP SESSION (01:00 - 07:59 GMT)
     if 1 <= current_hour <= 7:
         outcome = random.choice(["🪙 HEADS 🟡", "🪙 TAILS 🟢"])
@@ -131,11 +135,13 @@ def build_message_payload(current_hour: int) -> str:
 
     # 3. AVIATOR SESSION (16:00 - 22:59 GMT)
     elif 16 <= current_hour <= 22:
-        multiplier = round(random.uniform(1.25, 2.00), 2)
+        multiplier = round(random.uniform(1.25, 2.30), 2)
+        LATEST_AVIATOR_MULTIPLIER = multiplier
         
         latest_signal_payload = {
             "game": "aviator",
-            "target": multiplier
+            "target": multiplier,
+            "roundId": CURRENT_ROUND_ID
         }
         
         return (
@@ -372,11 +378,19 @@ async def send_10min_transition(bot: Bot):
         await safe_send_photo(bot, image_url, transition_text, f"10-Min Transition ({next_game})", auto_win_delay=0, reply_markup=get_game_keyboard(clean_name))
 
 # ==========================================
-# WEB HEALTH CHECK HANDLER
+# WEB API & HEALTH HANDLERS
 # ==========================================
 async def handle_ping(request):
     logger.info("Keep-alive ping received.")
     return web.Response(text="Bot & Socket server are running!", status=200)
+
+async def handle_next_multiplier(request):
+    """API endpoint for web games to fetch the active predicted multiplier."""
+    return web.json_response({
+        "roundId": CURRENT_ROUND_ID,
+        "predictedMultiplier": LATEST_AVIATOR_MULTIPLIER,
+        "payload": latest_signal_payload
+    })
 
 # ==========================================
 # MAIN EXECUTION
@@ -424,10 +438,13 @@ async def main():
     scheduler.start()
     logger.info("Channel Predictor Bot scheduler initialized continuously...")
 
-    # Start AIOHTTP Web Server for Cloud Keep-Alive & Socket.IO
+    # Start AIOHTTP Web Server for Cloud Keep-Alive, API & Socket.IO
     web_app = web.Application()
     sio.attach(web_app)
+    
+    # Endpoints
     web_app.router.add_get("/", handle_ping)
+    web_app.router.add_get("/api/next-multiplier", handle_next_multiplier)
     
     runner = web.AppRunner(web_app)
     await runner.setup()
@@ -435,7 +452,7 @@ async def main():
     port = int(os.environ.get("PORT", 10000))
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
-    logger.info(f"HTTP & Socket server running on port {port}")
+    logger.info(f"HTTP, API & Socket server running on port {port}")
 
     async with app:
         await app.start()
