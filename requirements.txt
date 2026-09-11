@@ -3,3 +3,4 @@ apscheduler
 tzdata
 aiohttp
 flask
+python-socketio
