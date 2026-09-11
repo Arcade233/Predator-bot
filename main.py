@@ -385,12 +385,25 @@ async def handle_ping(request):
     return web.Response(text="Bot & Socket server are running!", status=200)
 
 async def handle_next_multiplier(request):
-    """API endpoint for web games to fetch the active predicted multiplier."""
-    return web.json_response({
-        "roundId": CURRENT_ROUND_ID,
-        "predictedMultiplier": LATEST_AVIATOR_MULTIPLIER,
-        "payload": latest_signal_payload
-    })
+    """API endpoint for web games to fetch the active predicted multiplier with CORS headers."""
+    cors_headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+    }
+
+    # Handle CORS preflight check from external web browsers
+    if request.method == "OPTIONS":
+        return web.Response(status=200, headers=cors_headers)
+
+    return web.json_response(
+        {
+            "roundId": CURRENT_ROUND_ID,
+            "predictedMultiplier": LATEST_AVIATOR_MULTIPLIER,
+            "payload": latest_signal_payload
+        },
+        headers=cors_headers
+    )
 
 # ==========================================
 # MAIN EXECUTION
@@ -444,7 +457,7 @@ async def main():
     
     # Endpoints
     web_app.router.add_get("/", handle_ping)
-    web_app.router.add_get("/api/next-multiplier", handle_next_multiplier)
+    web_app.router.add_route("*", "/api/next-multiplier", handle_next_multiplier)
     
     runner = web.AppRunner(web_app)
     await runner.setup()
