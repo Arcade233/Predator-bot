@@ -392,11 +392,11 @@ async def send_10min_transition(bot: Bot):
 # WEB API & HEALTH HANDLERS
 # ==========================================
 async def handle_home(request):
-    """Serves the index.html file directly from the templates directory."""
-    template_path = os.path.join(os.path.dirname(__file__), "templates", "index.html")
+    """Serves the index.html file directly from the template directory."""
+    template_path = os.path.join(os.path.dirname(__file__), "template", "index.html")
     if os.path.exists(template_path):
         return web.FileResponse(template_path)
-    return web.Response(text="templates/index.html file not found in repository.", status=404)
+    return web.Response(text="template/index.html file not found in repository.", status=404)
 
 async def handle_next_multiplier(request):
     """API endpoint for web games to fetch the active predicted game signal with CORS headers."""
