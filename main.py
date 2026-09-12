@@ -80,21 +80,24 @@ def build_message_payload(current_hour: int) -> str:
 
     # 1. COIN FLIP SESSION (01:00 - 07:59 GMT)
     if 1 <= current_hour <= 7:
-        outcome = random.choice(["🪙 HEADS 🟡", "🪙 TAILS 🟢"])
+        outcome = random.choice(["HEADS", "TAILS"])
+        formatted_outcome = "🪙 HEADS 🟡" if outcome == "HEADS" else "🪙 TAILS 🟢"
         confidence = random.randint(92, 99)
         next_mins = random.randint(4, 7)
         
         latest_signal_payload = {
+            "id": CURRENT_ROUND_ID,
             "game": "coinflip",
             "outcome": outcome,
-            "confidence": confidence
+            "confidence": confidence,
+            "timestamp": CURRENT_ROUND_ID
         }
         
         return (
             "💎 *VIP AI SIGNAL — COIN FLIP (1WIN)* 💎\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
             "\n"
-            f" 🎯 *PREDICTED SIDE:* `{outcome}`\n"
+            f" 🎯 *PREDICTED SIDE:* `{formatted_outcome}`\n"
             f" ⚡ *BOT CONFIDENCE:* `{confidence}%`\n"
             "\n"
             " ⏰ *STATUS:* `Active Entry`\n"
@@ -112,9 +115,11 @@ def build_message_payload(current_hour: int) -> str:
         next_mins = random.randint(3, 8)
         
         latest_signal_payload = {
+            "id": CURRENT_ROUND_ID,
             "game": "mines",
             "safe_tiles": safe_tiles,
-            "accuracy": accuracy
+            "accuracy": accuracy,
+            "timestamp": CURRENT_ROUND_ID
         }
         
         return (
@@ -139,9 +144,11 @@ def build_message_payload(current_hour: int) -> str:
         LATEST_AVIATOR_MULTIPLIER = multiplier
         
         latest_signal_payload = {
+            "id": CURRENT_ROUND_ID,
             "game": "aviator",
             "target": multiplier,
-            "roundId": CURRENT_ROUND_ID
+            "roundId": CURRENT_ROUND_ID,
+            "timestamp": CURRENT_ROUND_ID
         }
         
         return (
@@ -159,7 +166,11 @@ def build_message_payload(current_hour: int) -> str:
 
     # 4. MAINTENANCE / OFFLINE (23:00 - 00:59 GMT)
     else:
-        latest_signal_payload = {"game": "offline"}
+        latest_signal_payload = {
+            "id": CURRENT_ROUND_ID,
+            "game": "offline",
+            "timestamp": CURRENT_ROUND_ID
+        }
         return (
             "🔴 *ALGORITHM OFFLINE — MAINTENANCE* 🔴\n"
             "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n"
@@ -380,12 +391,15 @@ async def send_10min_transition(bot: Bot):
 # ==========================================
 # WEB API & HEALTH HANDLERS
 # ==========================================
-async def handle_ping(request):
-    logger.info("Keep-alive ping received.")
-    return web.Response(text="Bot & Socket server are running!", status=200)
+async def handle_home(request):
+    """Serves the index.html file directly from the templates directory."""
+    template_path = os.path.join(os.path.dirname(__file__), "templates", "index.html")
+    if os.path.exists(template_path):
+        return web.FileResponse(template_path)
+    return web.Response(text="templates/index.html file not found in repository.", status=404)
 
 async def handle_next_multiplier(request):
-    """API endpoint for web games to fetch the active predicted multiplier with CORS headers."""
+    """API endpoint for web games to fetch the active predicted game signal with CORS headers."""
     cors_headers = {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, OPTIONS",
@@ -455,8 +469,13 @@ async def main():
     web_app = web.Application()
     sio.attach(web_app)
     
+    # Mount static assets if static folder exists
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    if os.path.exists(static_dir):
+        web_app.router.add_static("/static/", static_dir)
+    
     # Endpoints
-    web_app.router.add_get("/", handle_ping)
+    web_app.router.add_get("/", handle_home)
     web_app.router.add_route("*", "/api/next-multiplier", handle_next_multiplier)
     
     runner = web.AppRunner(web_app)
